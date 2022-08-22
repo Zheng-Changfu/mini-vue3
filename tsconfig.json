@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "es2016",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowJs": false,
+    "strict": false,
+    "noUnusedLocals": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "removeComments": false,
+    "jsx": "preserve",
+    "lib": ["esnext", "dom"],
+    "rootDir": ".",
+    "paths": {
+      "@vue/*": ["packages/*/src"]
+    }
+  },
+  "include": ["packages/*/src"]
+}

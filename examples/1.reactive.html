@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+  <script>
+    const { reactive } = VueReactivity
+    /*
+      1. reactive 只能代理对象类型的数据
+      2. reactive 深度代理是懒代理的(读取到是一个对象时，会再次进行代理)
+      3. 已经被 reactive 代理过的数据会被缓存起来,再次用 reactive 代理时会返回缓存的数据
+      4. 代理 代理对象会返回之前的代理对象
+      5. reactive 原理是基于 Proxy 实现的
+    */
+    const value = { name: 'zcf', age: 24, address: { a: 1 } }
+    const info1 = reactive(value)
+    const info2 = reactive(info1)
+    // console.log(info1, 'info')
+    // console.log(info2, 'info')
+    // console.log(info1 === info2)
+  </script>
+</body>
+
+</html>
