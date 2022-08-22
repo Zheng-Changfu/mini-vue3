@@ -28,25 +28,24 @@ var VueReactivity = (() => {
   var isObject = (val) => typeof val === "object" && val !== null;
 
   // packages/reactivity/src/effect.ts
+  var activeEffect;
   function effect(fn) {
     const effect2 = new ReactiveEffect(fn);
     effect2.run();
   }
-  var activeEffect;
   var ReactiveEffect = class {
     constructor(fn) {
       this.fn = fn;
-      this.active = true;
+      this.acitve = true;
       this.deps = [];
     }
     run() {
-      if (!this.active) {
+      if (!this.acitve) {
         return this.fn();
       } else {
         try {
           this.parent = activeEffect;
           activeEffect = this;
-          cleanUpEffects(this);
           return this.fn();
         } finally {
           activeEffect = this.parent;
@@ -55,20 +54,12 @@ var VueReactivity = (() => {
       }
     }
   };
-  function cleanUpEffects(effect2) {
-    const deps = effect2.deps;
-    if (deps.length > 0) {
-      deps.forEach((dep) => {
-        dep.delete(effect2);
-      });
-    }
-  }
-  var targetMap = /* @__PURE__ */ new WeakMap();
-  function track(target, opertion, key) {
+  var proxyMap = /* @__PURE__ */ new WeakMap();
+  function track(target, key) {
     if (activeEffect) {
-      let depsMap = targetMap.get(target);
+      let depsMap = proxyMap.get(target);
       if (!depsMap) {
-        targetMap.set(target, depsMap = /* @__PURE__ */ new Map());
+        proxyMap.set(target, depsMap = /* @__PURE__ */ new Map());
       }
       let deps = depsMap.get(key);
       if (!deps) {
@@ -76,58 +67,56 @@ var VueReactivity = (() => {
       }
       deps.add(activeEffect);
       activeEffect.deps.push(deps);
+      console.log(proxyMap, "proxyMap");
     }
   }
-  function trigger(target, opertion, key, value, oldValue) {
-    const depsMap = targetMap.get(target);
+  function trigger(target, key, value, oldValue) {
+    const depsMap = proxyMap.get(target);
     if (!depsMap)
       return;
-    let effects = depsMap.get(key);
-    if (effects) {
-      effects = new Set(effects);
-      effects.forEach((effect2) => {
-        if (effect2 !== activeEffect) {
-          effect2.run();
-        }
-      });
-    }
+    const effects = depsMap.get(key);
+    effects.forEach((effect2) => effect2.run());
   }
 
+  // packages/reactivity/src/baseHandlers.ts
+  var baseHandler = {
+    get(target, key, receiver) {
+      if (key === "__v_isReactive" /* IS_REACTIVE */) {
+        return true;
+      }
+      const res = Reflect.get(target, key, receiver);
+      track(target, key);
+      if (res && isObject(res)) {
+        return reactive(res);
+      }
+      return res;
+    },
+    set(target, key, value, receiver) {
+      const oldValue = target[key];
+      target[key] = value;
+      const res = Reflect.set(target, key, value, receiver);
+      if (!Object.is(oldValue, value)) {
+        trigger(target, key, value, oldValue);
+      }
+      return res;
+    }
+  };
+
   // packages/reactivity/src/reactive.ts
-  var proxyMap = /* @__PURE__ */ new WeakMap();
+  var proxyMap2 = /* @__PURE__ */ new WeakMap();
   function reactive(value) {
     if (!isObject(value)) {
       return value;
     }
-    const exitsingProxy = proxyMap.get(value);
-    if (exitsingProxy) {
-      return exitsingProxy;
-    }
     if (value["__v_isReactive" /* IS_REACTIVE */]) {
       return value;
     }
-    const proxy = new Proxy(value, {
-      get(target, key, receiver) {
-        if (key === "__v_isReactive" /* IS_REACTIVE */) {
-          return true;
-        }
-        const res = Reflect.get(target, key, receiver);
-        track(target, "get", key);
-        if (res && isObject(res)) {
-          return reactive(res);
-        }
-        return res;
-      },
-      set(target, key, value2, receiver) {
-        const oldValue = target[key];
-        const res = Reflect.set(target, key, value2, receiver);
-        if (!Object.is(oldValue, value2)) {
-          trigger(target, "set", key, value2, oldValue);
-        }
-        return res;
-      }
-    });
-    proxyMap.set(value, proxy);
+    const exitsingProxy = proxyMap2.get(value);
+    if (exitsingProxy) {
+      return exitsingProxy;
+    }
+    const proxy = new Proxy(value, baseHandler);
+    proxyMap2.set(value, proxy);
     return proxy;
   }
   return __toCommonJS(src_exports);

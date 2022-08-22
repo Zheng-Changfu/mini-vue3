@@ -13,17 +13,13 @@
   <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
   <script src="../packages/reactivity/dist/reactivity.global.js"></script>
   <script>
-    const { reactive, effect } = VueReactivity
-    const state = reactive({ name: 'zcf', age: 24 })
-    /*
-      1. effect 一上来就会先执行一次
-      2. 当 effect 中的响应式数据发生了变化后会重新执行
-    */
-    effect(() => {
-      console.log('执行了~~')
+    const { effect, reactive } = VueReactivity
+
+    const state = reactive({ age: 24 })
+
+    const runner = effect(() => {
       app.innerHTML = state.age
     })
-
 
     setTimeout(() => {
       state.age++

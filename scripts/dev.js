@@ -4,27 +4,30 @@ const { build } = require("esbuild");
 
 const target = args._[0] || "reactivity";
 const format = args.format || "global";
+
 const pkg = require(resolve(__dirname, `../packages/${target}/package.json`));
-const outputFormat =
+const outoutFormat =
   format === "global" ? "iife" : format === "cjs" ? "cjs" : "esm";
 
 const outfile = resolve(
   __dirname,
   `../packages/${target}/dist/${target}.${format}.js`
 );
-
+// reactivity/dist/reactivity.global.js
+// index.html中 window.Vue window.VueReactivity
+console.log(pkg);
 build({
-  entryPoints: [resolve(__dirname, `../packages/${target}/src/index.ts`)], // 入口文件
-  outfile, // 输出文件
-  sourcemap: true, // 开启 sourcemap
-  bundle: true, // 打包引入的模块
-  format: outputFormat, // 打包格式
-  globalName: pkg?.buildOptions?.name, // 全局名称 window.xxxx
+  entryPoints: [resolve(__dirname, `../packages/${target}/src/index.ts`)],
+  outfile,
+  format: outoutFormat,
+  sourcemap: true,
+  globalName: pkg?.buildOptions?.name,
+  bundle: true, // 把你依赖的包打包进来
   watch: {
     onRebuild(err) {
-      if (!err) console.log("rebuilt~~~");
+      if (!err) console.log("~~~");
     },
   },
 }).then(() => {
-  console.log("watch~~~");
+  console.log("启动成功");
 });

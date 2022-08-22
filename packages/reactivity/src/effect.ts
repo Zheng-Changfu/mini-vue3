@@ -1,22 +1,21 @@
+export let activeEffect;
 export function effect(fn) {
   const effect = new ReactiveEffect(fn);
   effect.run();
 }
-export let activeEffect;
+
 class ReactiveEffect {
-  public parent; // 记录当前 effect 的父亲
-  public active = true; // 默认是激活状态
-  public deps = []; // 收集的依赖，后续会用于清理工作
+  public parent; // 记录当前的父亲是谁
+  public acitve = true; // 当前是否是激活状态
+  public deps = []; // 用来清理依赖的
   constructor(public fn) {}
   run() {
-    if (!this.active) {
+    if (!this.acitve) {
       return this.fn();
     } else {
       try {
-        this.parent = activeEffect; // 第一次是 undefined
+        this.parent = activeEffect;
         activeEffect = this;
-        // 每次执行函数前都清除之前的依赖
-        cleanUpEffects(this);
         return this.fn();
       } finally {
         activeEffect = this.parent;
@@ -26,21 +25,14 @@ class ReactiveEffect {
   }
 }
 
-function cleanUpEffects(effect) {
-  const deps = effect.deps;
-  if (deps.length > 0) {
-    deps.forEach((dep) => {
-      dep.delete(effect);
-    });
-  }
-}
-
-const targetMap = new WeakMap();
-export function track(target, opertion, key) {
+// WeakMap:{object : Map{age:Set[f1,f2]}}
+const proxyMap = new WeakMap();
+export function track(target, key) {
+  // fn
   if (activeEffect) {
-    let depsMap = targetMap.get(target);
+    let depsMap = proxyMap.get(target);
     if (!depsMap) {
-      targetMap.set(target, (depsMap = new Map()));
+      proxyMap.set(target, (depsMap = new Map()));
     }
     let deps = depsMap.get(key);
     if (!deps) {
@@ -48,19 +40,13 @@ export function track(target, opertion, key) {
     }
     deps.add(activeEffect);
     activeEffect.deps.push(deps);
+    console.log(proxyMap, "proxyMap");
   }
 }
 
-export function trigger(target, opertion, key, value, oldValue) {
-  const depsMap = targetMap.get(target);
+export function trigger(target, key, value, oldValue) {
+  const depsMap = proxyMap.get(target);
   if (!depsMap) return;
-  let effects = depsMap.get(key);
-  if (effects) {
-    effects = new Set(effects);
-    effects.forEach((effect) => {
-      if (effect !== activeEffect) {
-        effect.run();
-      }
-    });
-  }
+  const effects = depsMap.get(key);
+  effects.forEach((effect) => effect.run());
 }

@@ -9,22 +9,24 @@
 </head>
 
 <body>
-  <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script>
+  <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
   <script>
-    const { reactive } = VueReactivity
     /*
-      1. reactive 只能代理对象类型的数据
-      2. reactive 深度代理是懒代理的(读取到是一个对象时，会再次进行代理)
-      3. 已经被 reactive 代理过的数据会被缓存起来,再次用 reactive 代理时会返回缓存的数据
-      4. 代理 代理对象会返回之前的代理对象
-      5. reactive 原理是基于 Proxy 实现的
+      1. reactive 是用来定义响应式数据的,就类似与 vue2 中的 data
+      2. reactive 只能定义对象类型的数据
+      3. reactive 是懒代理,默认不会进行深度递归,只有当取值的时候才会进行代理
+      4. reactive 会将代理过的对象缓存到一个对象中,如果重复代理,会将此对象从缓存中取出返回
+      5. reactive 会将 proxy 对象标记一下,如果下次代理的是一个 proxy 对象,会判断是否有该标记,如果有该标记,就说明本身就是一个 proxy 对象,无需重复代理
     */
-    const value = { name: 'zcf', age: 24, address: { a: 1 } }
-    const info1 = reactive(value)
-    const info2 = reactive(info1)
-    // console.log(info1, 'info')
-    // console.log(info2, 'info')
-    // console.log(info1 === info2)
+    const { reactive } = VueReactivity
+    const obj = { name: 'zcf', age: 24, address: { a: 1 } }
+    // obj.address
+    // const info1 = reactive(obj)
+    const info2 = reactive(obj)
+    const info3 = reactive(info2)
+    console.log(info2 === info3)
+
   </script>
 </body>
 
