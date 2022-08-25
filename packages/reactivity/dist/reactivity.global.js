@@ -20,22 +20,37 @@ var VueReactivity = (() => {
   // packages/reactivity/src/index.ts
   var src_exports = {};
   __export(src_exports, {
+    computed: () => computed,
     effect: () => effect,
     reactive: () => reactive
   });
 
   // packages/shared/src/index.ts
   var isObject = (val) => typeof val === "object" && val !== null;
+  var isFunction = (val) => typeof val === "function";
 
   // packages/reactivity/src/effect.ts
   var activeEffect;
-  function effect(fn) {
-    const effect2 = new ReactiveEffect(fn);
+  function effect(fn, options) {
+    const effect2 = new ReactiveEffect(fn, options);
     effect2.run();
+    const runner = effect2.run.bind(effect2);
+    runner.effect = effect2;
+    return runner;
+  }
+  function cleanUpEffect(effect2) {
+    const deps = effect2.deps;
+    if (deps.length > 0) {
+      for (let i = 0; i < deps.length; i++) {
+        deps[i].delete(effect2);
+      }
+      deps.length = 0;
+    }
   }
   var ReactiveEffect = class {
-    constructor(fn) {
+    constructor(fn, options) {
       this.fn = fn;
+      this.options = options;
       this.acitve = true;
       this.deps = [];
     }
@@ -46,6 +61,7 @@ var VueReactivity = (() => {
         try {
           this.parent = activeEffect;
           activeEffect = this;
+          cleanUpEffect(this);
           return this.fn();
         } finally {
           activeEffect = this.parent;
@@ -65,17 +81,36 @@ var VueReactivity = (() => {
       if (!deps) {
         depsMap.set(key, deps = /* @__PURE__ */ new Set());
       }
+      trackEffect(deps);
+    }
+  }
+  function trackEffect(deps) {
+    if (activeEffect) {
       deps.add(activeEffect);
       activeEffect.deps.push(deps);
-      console.log(proxyMap, "proxyMap");
     }
   }
   function trigger(target, key, value, oldValue) {
     const depsMap = proxyMap.get(target);
     if (!depsMap)
       return;
-    const effects = depsMap.get(key);
-    effects.forEach((effect2) => effect2.run());
+    let effects = depsMap.get(key);
+    triggerEffect(effects);
+  }
+  function triggerEffect(effects) {
+    if (effects) {
+      effects = [...new Set(effects)];
+      effects.forEach((effect2) => {
+        var _a;
+        if (effect2 !== activeEffect) {
+          if ((_a = effect2.options) == null ? void 0 : _a.scheduler) {
+            effect2.options.scheduler();
+          } else {
+            effect2.run();
+          }
+        }
+      });
+    }
   }
 
   // packages/reactivity/src/baseHandlers.ts
@@ -119,6 +154,49 @@ var VueReactivity = (() => {
     proxyMap2.set(value, proxy);
     return proxy;
   }
+
+  // packages/reactivity/src/computed.ts
+  function computed(getterOrOptions) {
+    const isOnlyGetter = isFunction(getterOrOptions);
+    let getter;
+    let setter;
+    if (isOnlyGetter) {
+      getter = getterOrOptions;
+      setter = () => {
+      };
+    } else {
+      getter = getterOrOptions.get;
+      setter = getterOrOptions.set;
+    }
+    return new ComputedImpl(getter, setter);
+  }
+  var ComputedImpl = class {
+    constructor(getter, setter) {
+      this.getter = getter;
+      this.setter = setter;
+      this.__v_isRef = true;
+      this._dirty = true;
+      this._effect = new ReactiveEffect(getter, {
+        scheduler: () => {
+          if (!this._dirty) {
+            this._dirty = true;
+            triggerEffect(this.deps);
+          }
+        }
+      });
+    }
+    get value() {
+      trackEffect(this.deps || (this.deps = /* @__PURE__ */ new Set()));
+      if (this._dirty) {
+        this._dirty = false;
+        this._value = this._effect.run();
+      }
+      return this._value;
+    }
+    set value(val) {
+      this.setter(val);
+    }
+  };
   return __toCommonJS(src_exports);
 })();
 //# sourceMappingURL=reactivity.global.js.map

@@ -1,14 +1,27 @@
 export let activeEffect;
-export function effect(fn) {
-  const effect = new ReactiveEffect(fn);
+export function effect(fn, options) {
+  const effect = new ReactiveEffect(fn, options);
   effect.run();
+  const runner = effect.run.bind(effect);
+  runner.effect = effect;
+  return runner;
 }
 
-class ReactiveEffect {
+function cleanUpEffect(effect) {
+  const deps = effect.deps;
+  if (deps.length > 0) {
+    for (let i = 0; i < deps.length; i++) {
+      deps[i].delete(effect);
+    }
+    deps.length = 0;
+  }
+}
+
+export class ReactiveEffect {
   public parent; // 记录当前的父亲是谁
   public acitve = true; // 当前是否是激活状态
   public deps = []; // 用来清理依赖的
-  constructor(public fn) {}
+  constructor(public fn, public options) {}
   run() {
     if (!this.acitve) {
       return this.fn();
@@ -16,6 +29,7 @@ class ReactiveEffect {
       try {
         this.parent = activeEffect;
         activeEffect = this;
+        cleanUpEffect(this);
         return this.fn();
       } finally {
         activeEffect = this.parent;
@@ -38,15 +52,35 @@ export function track(target, key) {
     if (!deps) {
       depsMap.set(key, (deps = new Set()));
     }
+    trackEffect(deps);
+  }
+}
+
+export function trackEffect(deps) {
+  if (activeEffect) {
     deps.add(activeEffect);
     activeEffect.deps.push(deps);
-    console.log(proxyMap, "proxyMap");
   }
 }
 
 export function trigger(target, key, value, oldValue) {
   const depsMap = proxyMap.get(target);
   if (!depsMap) return;
-  const effects = depsMap.get(key);
-  effects.forEach((effect) => effect.run());
+  let effects = depsMap.get(key);
+  triggerEffect(effects);
+}
+
+export function triggerEffect(effects) {
+  if (effects) {
+    effects = [...new Set(effects)];
+    effects.forEach((effect) => {
+      if (effect !== activeEffect) {
+        if (effect.options?.scheduler) {
+          effect.options.scheduler();
+        } else {
+          effect.run();
+        }
+      }
+    });
+  }
 }

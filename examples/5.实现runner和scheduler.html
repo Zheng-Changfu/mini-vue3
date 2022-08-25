@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <button id="btn">更新</button>
+  <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+  <script>
+    const { effect, reactive } = VueReactivity
+
+    const state = reactive({ name: 'zcf', age: 24, flag: true })
+
+    let waiting = false
+
+    const runner = effect(() => {
+      console.log('render')
+      app.innerHTML = state.age
+    }, {
+      scheduler: () => {
+        if (!waiting) {
+          waiting = true
+          Promise.resolve().then(() => {
+            runner()
+            waiting = false
+          })
+        }
+      }
+    })
+
+
+    setTimeout(() => {
+      state.age++
+      state.age++
+      state.age++
+    }, 1000)
+  </script>
+</body>
+
+</html>

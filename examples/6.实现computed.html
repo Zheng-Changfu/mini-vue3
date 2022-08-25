@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+  <script>
+    const { effect, reactive, computed } = VueReactivity
+
+    const state = reactive({ name: 'zcf', age: 24, flag: true })
+
+    const computedName = computed(() => {
+      console.log('触发')
+      return state.name
+    })
+
+
+
+    effect(() => {
+      app.innerHTML = computedName.value
+    })
+
+
+    setTimeout(() => {
+      state.name = 'zc'
+    }, 1000)
+
+    // console.log(computedName.value);
+    // console.log(computedName.value);
+    // console.log(computedName.value);
+
+    // state.name = 'zc'
+    // console.log(computedName.value)
+
+
+
+
+    // const computedAge = computed({
+    //   get () {
+    //     return state.age
+    //   },
+    //   set (val) {
+    //     state.age = val
+    //   }
+    // })
+
+
+
+  </script>
+</body>
+
+</html>

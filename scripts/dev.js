@@ -15,7 +15,7 @@ const outfile = resolve(
 );
 // reactivity/dist/reactivity.global.js
 // index.html中 window.Vue window.VueReactivity
-console.log(pkg);
+
 build({
   entryPoints: [resolve(__dirname, `../packages/${target}/src/index.ts`)],
   outfile,
@@ -24,7 +24,7 @@ build({
   globalName: pkg?.buildOptions?.name,
   bundle: true, // 把你依赖的包打包进来
   watch: {
-    onRebuild(err) {
+    onRebuild (err) {
       if (!err) console.log("~~~");
     },
   },
