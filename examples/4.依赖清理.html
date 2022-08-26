@@ -15,18 +15,20 @@
   <script>
     const { effect, reactive } = VueReactivity
 
-    const state = reactive({ age: 24 })
-    /*
-      1. effect包裹的函数默认会先执行一次
-    */
-    // age -> fn
-    const runner = effect(() => { // fn
-      app.innerHTML = state.age // 会触发get操作
+    const state = reactive({ name: 'a', age: 24, flag: true })
+
+    effect(() => {
+      console.log('执行') // 3
+      app.innerHTML = state.flag ? state.age : state.name
     })
 
     setTimeout(() => {
-      state.age++ // age -> fn()
-    }, 2000)
+      state.flag = false
+      setTimeout(() => {
+        state.age++
+      }, 1000)
+    }, 1000)
+
   </script>
 </body>
 

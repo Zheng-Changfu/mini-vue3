@@ -2,6 +2,7 @@ const args = require("minimist")(process.argv.slice(2));
 const { resolve } = require("path");
 const { build } = require("esbuild");
 
+// yarn dev: node ./scripts/dev reactivity --format=global
 const target = args._[0] || "reactivity";
 const format = args.format || "global";
 
@@ -24,7 +25,7 @@ build({
   globalName: pkg?.buildOptions?.name,
   bundle: true, // 把你依赖的包打包进来
   watch: {
-    onRebuild(err) {
+    onRebuild (err) {
       if (!err) console.log("~~~");
     },
   },

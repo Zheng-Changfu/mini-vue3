@@ -23,8 +23,10 @@
     const obj = { name: 'zcf', age: 24, address: { a: 1 } }
     // obj.address
     // const info1 = reactive(obj)
+    
     const info2 = reactive(obj)
     const info3 = reactive(info2)
+    info2.name
     console.log(info2 === info3)
 
   </script>

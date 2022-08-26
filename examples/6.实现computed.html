@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+  <script>
+    const { effect, reactive, computed, shallowReactive, readonly, shallowReadonlu } = VueReactivity
+    const state = reactive({ name: 'a', age: 24 })
+    /*
+      1. computed:缓存
+      2. 一上来不执行
+      3. 计算属性依赖的值发生了变化，不会重新执行
+      4. computed也具备依赖收集
+
+
+      watch
+      ref,unref,toRef,toRef,isReaecitve,isRef
+      runtime-core 虚拟节点 二进制,位运算(| & <<  >> ^)
+      runtime-dom 节点的dom操作 h render
+      diff算法
+    */
+
+    const computedAge = computed(() => {
+      return state.age
+    })
+
+    effect(() => {
+      console.log('执行')
+      app.innerHTML = computedAge.value
+    })
+
+    setTimeout(() => {
+      state.age++
+    }, 1000)
+    // computed({
+    //   get(){},
+    //   set(){}
+    // })
+    // console.log(computedAge.value)
+    // console.log(computedAge.value)
+    // console.log(computedAge.value)
+    // state.age++
+    // console.log(computedAge.value)
+
+
+
+    // computedA(){
+    //   return a
+    // }
+    // computedA:{
+    //   get(){},
+    //   set(){}
+    // }
+  </script>
+</body>
+
+</html>
