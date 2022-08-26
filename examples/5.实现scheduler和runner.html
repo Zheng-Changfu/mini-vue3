@@ -14,19 +14,30 @@
   <script src="../packages/reactivity/dist/reactivity.global.js"></script>
   <script>
     const { effect, reactive } = VueReactivity
-
-    const state = reactive({ age: 24 })
-    /*
-      1. effect包裹的函数默认会先执行一次
-    */
-    // age -> fn
-    const runner = effect(() => { // fn
-      app.innerHTML = state.age // 会触发get操作
+    const state = reactive({ name: 'a', age: 24 })
+    let waiting = true
+    const runner = effect(() => {
+      console.log('执行')
+      app.innerHTML = state.age
+    }, {
+      // nextTick原理
+      scheduler: () => {
+        if (waiting) {
+          waiting = false
+          Promise.resolve().then(() => {
+            console.log('更新')
+            runner()
+            waiting = true
+          })
+        }
+      }
     })
 
     setTimeout(() => {
-      state.age++ // age -> fn()
-    }, 2000)
+      state.age++
+      state.age++
+      state.age++
+    }, 1000)
   </script>
 </body>
 

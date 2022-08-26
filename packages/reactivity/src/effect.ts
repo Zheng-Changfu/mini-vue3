@@ -39,16 +39,16 @@ export class ReactiveEffect {
   }
 }
 
-// WeakMap:{object : Map{age:Set[f1,f2]}}
 const proxyMap = new WeakMap();
 export function track(target, key) {
   // fn
   if (activeEffect) {
-    let depsMap = proxyMap.get(target);
+    // f {ComputedRefImpl:{value:Set[f]} }
+    let depsMap = proxyMap.get(target); // ComputedRefImpl
     if (!depsMap) {
       proxyMap.set(target, (depsMap = new Map()));
     }
-    let deps = depsMap.get(key);
+    let deps = depsMap.get(key); // value
     if (!deps) {
       depsMap.set(key, (deps = new Set()));
     }
@@ -64,7 +64,7 @@ export function trackEffect(deps) {
 }
 
 export function trigger(target, key, value, oldValue) {
-  const depsMap = proxyMap.get(target);
+  const depsMap = proxyMap.get(target); // {value:Set[f]}
   if (!depsMap) return;
   let effects = depsMap.get(key);
   triggerEffect(effects);
