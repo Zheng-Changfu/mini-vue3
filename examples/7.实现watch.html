@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/vue/dist/vue.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+  <script>
+    // watch watchEffect
+    const { watch, reactive } = VueReactivity
+    const state = reactive({ age: 1, address: { n: 1 } })
+    // watch的如果是一个响应式对象，默认就是深度监控
+    watch(state, (newVal, oldVal) => {
+      console.log(newVal, oldVal)
+      app.innerHTML = JSON.stringify(newVal)
+    }, { immediate: true })
+
+    // watch(() => state.age, (newAge, oldAge) => {
+    //   console.log(newAge, oldAge)
+    //   app.innerHTML = newAge
+    // }, { immediate: true })
+
+    // stage.age ++
+
+    setTimeout(() => {
+      state.address.n++
+    }, 2000)
+  </script>
+</body>
+
+</html>
