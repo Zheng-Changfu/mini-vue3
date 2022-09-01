@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+  <script>
+
+    const { reactive, effect, toRef, toRefs } = VueReactivity
+    const state = reactive({ name: 'zcf', age: 19 })
+    //#region 
+    // null undefined 
+    /*
+      name
+      setup(){
+        const state = reactive({name:'zcf',age:18})
+        return {
+          ...toRefs(state) name:Ref
+        }
+      }
+    */
+    // stae.name
+    // console.log(state, 'state')
+    /*
+      toRef
+        为了解决reactive解构失去响应式的问题
+    */
+    // const ageRef = toRef(state, 'age', 'defaultValue')
+
+    // let { name, age } = toRefs(state)
+    // console.log(age, 'age')
+    // effect(() => { // e1
+    //   // app.innerHTML = age.value // 19
+    //   app.innerHTML = ageRef.value
+    // })
+    // setTimeout(() => {
+    //   // age++
+    //   // state.age++
+    //   // age.value++
+    //   ageRef.value++
+    // }, 1000)
+    //#endregion
+    const { name, age } = toRefs(state)
+    console.log(name, age)
+    effect(() => {
+      app.innerHTML = age.value
+    })
+
+    setTimeout(() => {
+      age.value++
+    }, 1000)
+  </script>
+</body>
+
+</html>

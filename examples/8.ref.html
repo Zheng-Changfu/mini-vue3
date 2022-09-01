@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/reactivity/dist/reactivity.global.js"></script> -->
+  <script src="../packages/reactivity/dist/reactivity.global.js"></script>
+  <script>
+    const { ref, unref, toRef, toRefs, customRef, effect } = VueReactivity
+    /*
+      
+    */
+    // const r = reactive(0)
+
+    // 
+    // const state1 = ref(0) // reactive proxy {value:0}
+    // const state2 = ref(state1)
+    const state2 = ref({ name: 'zcf' }) // 
+    // let a = ref(0) a++  
+    // a -> xxxxx
+    // a = a +1
+    // a -> yyyyy
+    // const a = ref(0)
+    // a.value++
+    const state3 = ref(0) // RefImpl{value:0}
+    // console.log(state1 === state2, state3)
+    // {value:[e1]}
+    console.log(state2, '@@')
+    effect(() => { // e1
+      // app.innerHTML = state3.value
+      app.innerHTML = unref(state3)
+    })
+
+    setTimeout(() => {
+      // state1.value++ // proxy
+      state3.value = { name: 'zcf' }
+      // RefImpl{value:{name:'zcf'}}
+      // RefImpl{value:Proxy{name:'zcf'}}
+    }, 1000)
+
+  </script>
+</body>
+
+</html>

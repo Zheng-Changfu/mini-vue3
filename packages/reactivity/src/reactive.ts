@@ -5,6 +5,11 @@ const proxyMap = new WeakMap(); // 只能用对象作为key,弱引用
 export const enum Reactive_FLAGS {
   IS_REACTIVE = "__v_isReactive",
 }
+
+export function toReactive(val) {
+  return isObject(val) ? reactive(val) : val;
+}
+export const isReactive = (val) => val && val[Reactive_FLAGS.IS_REACTIVE];
 export function reactive(value) {
   // 只能定义对象类型的数据
 
@@ -29,7 +34,7 @@ export function reactive(value) {
     // 会将代理过的对象缓存到一个对象中,如果重复代理,会将此对象从缓存中取出返回
     return exitsingProxy;
   }
-  
+
   const proxy = new Proxy(value, baseHandler);
   proxyMap.set(value, proxy);
 

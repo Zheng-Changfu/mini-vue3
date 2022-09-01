@@ -21,8 +21,14 @@ var VueReactivity = (() => {
   var src_exports = {};
   __export(src_exports, {
     computed: () => computed,
+    customRef: () => customRef,
     effect: () => effect,
-    reactive: () => reactive
+    isRef: () => isRef,
+    reactive: () => reactive,
+    ref: () => ref,
+    toRef: () => toRef,
+    toRefs: () => toRefs,
+    unref: () => unref
   });
 
   // packages/shared/src/index.ts
@@ -128,7 +134,6 @@ var VueReactivity = (() => {
     },
     set(target, key, value, receiver) {
       const oldValue = target[key];
-      target[key] = value;
       const res = Reflect.set(target, key, value, receiver);
       if (!Object.is(oldValue, value)) {
         trigger(target, key, value, oldValue);
@@ -139,6 +144,10 @@ var VueReactivity = (() => {
 
   // packages/reactivity/src/reactive.ts
   var proxyMap2 = /* @__PURE__ */ new WeakMap();
+  function toReactive(val) {
+    return isObject(val) ? reactive(val) : val;
+  }
+  var isReactive = (val) => val && val["__v_isReactive" /* IS_REACTIVE */];
   function reactive(value) {
     if (!isObject(value)) {
       return value;
@@ -195,6 +204,88 @@ var VueReactivity = (() => {
     }
     set value(val) {
       this.setter(val);
+    }
+  };
+
+  // packages/reactivity/src/ref.ts
+  function ref(val) {
+    if (isRef(val)) {
+      return val;
+    }
+    return new RefImpl(val);
+  }
+  var RefImpl = class {
+    constructor(_rawValue) {
+      this._rawValue = _rawValue;
+      this.__v_isRef = true;
+      this._rawValue = _rawValue;
+      this._value = toReactive(_rawValue);
+    }
+    get value() {
+      trackEffect(this._deps || (this._deps = /* @__PURE__ */ new Set()));
+      return this._value;
+    }
+    set value(val) {
+      console.log(val, "val");
+      if (!Object.is(val, this._rawValue)) {
+        this._rawValue = val;
+        this._value = toReactive(this._rawValue);
+        triggerEffect(this._deps);
+      }
+    }
+  };
+  function isRef(val) {
+    return val && val.__v_isRef;
+  }
+  function toRef(target, key, defaultValue) {
+    if (!isReactive(target))
+      return target;
+    return new ObjectRefImpl(target, key, defaultValue);
+  }
+  var ObjectRefImpl = class {
+    constructor(source, key, defaultValue) {
+      this.source = source;
+      this.key = key;
+      this.defaultValue = defaultValue;
+      this.__v_isRef = true;
+    }
+    get value() {
+      const res = this.source[this.key];
+      return res === void 0 ? this.defaultValue : res;
+    }
+    set value(newVal) {
+      this.source[this.key] = newVal;
+    }
+  };
+  function toRefs(object) {
+    let res = {};
+    for (const key in object) {
+      res[key] = toRef(object, key);
+    }
+    return res;
+  }
+  function unref(val) {
+    return isRef(val) ? val.value : val;
+  }
+  function customRef(factory) {
+    return new CustomRefImpl(factory);
+  }
+  var CustomRefImpl = class {
+    constructor(factory) {
+      this.factory = factory;
+      this.__v_isRef = true;
+      const { get, set } = factory(
+        () => trackEffect(this._deps || (this._deps = /* @__PURE__ */ new Set())),
+        () => triggerEffect(this._deps)
+      );
+      this.get = get;
+      this.set = set;
+    }
+    get value() {
+      return this.get();
+    }
+    set value(newVal) {
+      this.set(newVal);
     }
   };
   return __toCommonJS(src_exports);
