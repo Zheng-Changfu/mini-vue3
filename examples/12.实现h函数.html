@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <!-- <script src='../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js'></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { h } = VueRuntimeDOM
+    //#region 
+    // 参数2个的情况
+    // 1. 是一个对象并且不是数组，是一个虚拟节点 h('div',h('span')) 包装成数组,当做children处理
+    const v1 = h('div', h('span'))
+    console.log(v1, 'v1', `是一个对象并且不是数组，是一个虚拟节点 h('div',h('span')) 包装成数组,当做children处理`)
+    // 2. 是一个对象并且不是数组，不是一个虚拟节点h('div',{style:{color:'red'}})  当做 prop 处理
+    const v2 = h('div', { style: { color: 'red' } })
+    console.log(v2, 'v2', `是一个对象并且不是数组，不是一个虚拟节点h('div',{style:{color:'red'}})  当做 prop 处理`)
+    // 3. 不是一个对象或者不是一个数组 h('div','helloworld') 忽略props，当做孩子处理
+    const v3 = h('div', 'helloworld')
+    console.log(v3, 'v3', `不是一个对象或者不是一个数组 h('div','helloworld') 忽略props，当做孩子处理`)
+    //#endregion
+
+    //#region 
+    // 参数大于3个的情况 
+    // 1. 截取所有的孩子,当做children处理,包装成数组
+    const v4 = h('div', { style: { color: 'red' } }, 'hello', 'world')
+    console.log(v4, 'v4', `截取所有的孩子,当做children处理,包装成数组`)
+    //#endregion
+
+    //#region
+    // 参数为3个的情况并且孩子是一个虚拟节点,当做children处理,包装成数组
+    const v5 = h('div', { a: 1 }, h('span'))
+    console.log(v5, 'v5', `参数为3个的情况并且孩子是一个虚拟节点,当做children处理,包装成数组`)
+    //#endregion
+
+    //#region 
+    // 其他情况,不处理
+    const v6 = h('div')
+    console.log(v6, 'v6', `其他情况,不处理`)
+    //#endregion
+  </script>
+</body>
+
+</html>

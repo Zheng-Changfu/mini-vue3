@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { createVNode } = VueRuntimeDOM
+
+    // console.log(VueRuntimeDOM, 'VueRuntimeDOM')
+
+    console.log(createVNode('h1', null, ['hello world']));
+
+
+    // h函数可以创建一个vnode,底层是用了createVNode方法
+    // const vnode = h('h1', 'helloworld')
+    // console.log(vnode, 'vnode')
+
+    // render(vnode, app)
+    /*
+      insert: hostInsert, remove: hostRemove, patchProp: hostPatchProp, createElement: hostCreateElement, createText: hostCreateText, createComment: hostCreateComment, setText: hostSetText, setElementText: hostSetElementText, parentNode: hostParentNode, nextSibling: hostNextSibling, setScopeId: hostSetScopeId=NOOP, cloneNode: hostCloneNode, insertStaticContent: hostInsertStaticContent
+    */
+    // createRenderer 教给用户自定义渲染
+    // const { render } = createRenderer({
+    //   createElement (tagName) {
+    //     return document.createElement(tagName)
+    //   },
+    //   setElementText (element, text) {
+    //     element.textContent = text
+    //   },
+    //   insert (element, parent, anchor) {
+    //     parent.insertBefore(element, anchor ?? null)
+    //   }
+    // })
+    // render函数可以将一个虚拟节点挂载到指定元素上
+    // render(vnode, app)
+
+  </script>
+</body>
+
+</html>
