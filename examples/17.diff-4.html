@@ -15,8 +15,11 @@
   <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
   <script>
     const { render, h } = VueRuntimeDOM
-    const vnode = h('div', { aa: 1, b: 2, style: { color: 'red' }, onClick: () => alert(222) }, h('span', null, h('p', 'hello')))
-    render(vnode, app)
+    // 1. 属性比对
+    render(h('div', { a: 1, b: 2 }, ['hello', 'world']), app)
+    setTimeout(() => {
+      render(h('div', { a: 2 }, 'helloworld123123123123'), app)
+    }, 2000)
   </script>
 </body>
 

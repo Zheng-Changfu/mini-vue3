@@ -15,8 +15,11 @@
   <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
   <script>
     const { render, h } = VueRuntimeDOM
-    const vnode = h('div', { aa: 1, b: 2, style: { color: 'red' }, onClick: () => alert(222) }, h('span', null, h('p', 'hello')))
-    render(vnode, app)
+    // 1. 卸载
+    render(h('div', 'helloworld'), app)
+    setTimeout(() => {
+      render(null, app)
+    }, 2000)
   </script>
 </body>
 
