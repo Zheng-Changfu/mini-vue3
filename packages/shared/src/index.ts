@@ -6,6 +6,8 @@ export const isFunction = (val) => typeof val === "function";
 
 export const isArray = (val) => Array.isArray(val);
 
+export const isNumber = (val) => typeof val === "number";
+
 export const isOn = (key) => /^on[^a-z]/.test(key);
 
 export const enum ShapeFlags {

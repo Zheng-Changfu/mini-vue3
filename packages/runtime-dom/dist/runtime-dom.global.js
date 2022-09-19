@@ -54,10 +54,17 @@ var VueRuntimeDOM = (() => {
   var isString = (val) => typeof val === "string";
   var isFunction = (val) => typeof val === "function";
   var isArray = (val) => Array.isArray(val);
+  var isNumber = (val) => typeof val === "number";
   var isOn = (key) => /^on[^a-z]/.test(key);
 
   // packages/runtime-core/src/vnode.ts
   var isVNode = (val) => !!(val && val.__v_isVNode);
+  var Text = Symbol("text");
+  var normalizeVNode = (child) => {
+    if (isString(child) || isNumber(child)) {
+      return createVNode(Text, null, String(child));
+    }
+  };
   var createVNode = (type, props, children) => {
     const shapeFlag = isString(type) ? 1 /* ELEMENT */ : 0;
     const vnode = {
@@ -112,32 +119,41 @@ var VueRuntimeDOM = (() => {
     } = options;
     const mountChildren = (children, el) => {
       for (let i = 0; i < children.length; i++) {
-        const child = children[i] = normalizeVNode(children[i]);
+        const child = children[i] = isString(children[i]) || isNumber(children[i]) ? normalizeVNode(children[i]) : children[i];
         patch(null, child, el);
       }
     };
     const mountElement = (vnode, container) => {
-      const { type, shapeFlag, children } = vnode;
+      const { type, children, shapeFlag } = vnode;
       const el = vnode.el = hostCreateElement(type);
       if (shapeFlag & 8 /* TEXT_CHILDREN */) {
         hostSetElementText(el, children);
       } else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
         mountChildren(children, el);
       }
+      hostInsert(el, container);
     };
     const processElement = (n1, n2, container) => {
       if (n1 == null) {
         mountElement(n2, container);
       }
     };
+    const processText = (n1, n2, container) => {
+      if (n1 == null) {
+        const el = n2.el = hostCreateText(n2.children);
+        hostInsert(el, container);
+      }
+    };
     const patch = (n1, n2, container) => {
       const { type, shapeFlag } = n2;
       switch (type) {
+        case Text:
+          processText(n1, n2, container);
+          break;
         default:
           if (shapeFlag & 1 /* ELEMENT */) {
             processElement(n1, n2, container);
           }
-          break;
       }
     };
     const render2 = (vnode, container) => {

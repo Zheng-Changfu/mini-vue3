@@ -1,8 +1,14 @@
-import { isString, ShapeFlags } from "@vue/shared";
+import { isNumber, isString, ShapeFlags } from "@vue/shared";
 
 export const isVNode = (val) => !!(val && val.__v_isVNode);
 
-export const normalizeVNode = (child) => {};
+export const Text = Symbol("text");
+
+export const normalizeVNode = (child) => {
+  if (isString(child) || isNumber(child)) {
+    return createVNode(Text, null, String(child));
+  }
+};
 
 export const createVNode = (type, props, children) => {
   const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0;
