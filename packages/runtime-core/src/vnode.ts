@@ -19,7 +19,7 @@ export const createVNode = (type, props, children) => {
   const vnode = {
     __v_isVNode: true,
     el: null, // 标记这个虚拟节点对应的真实dom
-    key: null, // 标记这个虚拟节点的唯一性，后续diff会用
+    key: props?.key ?? null, // 标记这个虚拟节点的唯一性，后续diff会用
     type,
     props,
     children,

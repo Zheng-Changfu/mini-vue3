@@ -24,7 +24,7 @@ export function createRenderer(options) {
     }
   };
 
-  const mountElement = (vnode, container) => {
+  const mountElement = (vnode, container, anchor) => {
     const { type, children, shapeFlag, props } = vnode;
     const el = (vnode.el = hostCreateElement(type));
 
@@ -42,7 +42,7 @@ export function createRenderer(options) {
       }
     }
 
-    hostInsert(el, container);
+    hostInsert(el, container, anchor);
   };
 
   const patchProps = (oldProps, newProps, el) => {
@@ -62,18 +62,155 @@ export function createRenderer(options) {
     }
   };
 
+  const patchedKeyChildren = (c1, c2, container) => {
+    let i = 0;
+    let e1 = c1.length - 1; // 旧数组最后一个下标
+    let e2 = c2.length - 1; // 新数组最后一个下标
+    // 优化1
+    // (a b)
+    // (a b) c
+    // i = 0,e1 = 1,e2 = 2
+    // i = 2,e1 = 1,e2 = 2
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i];
+      const n2 = c2[i];
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container);
+      } else {
+        break;
+      }
+      i++;
+    }
+
+    // 优化2
+    //   (a b)
+    // c (a b)
+    // i = 0,e1 = 1,e2 = 2
+    // i = 0,e1 = -1,e2 = 0
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container);
+      } else {
+        break;
+      }
+      e1--;
+      e2--;
+    }
+
+    if (i > e1) {
+      if (i <= e2) {
+        // 添加节点
+        while (i <= e2) {
+          const nextPos = e2 + 1;
+          const anchor = nextPos < c2.length ? c2[nextPos].el : null;
+          patch(null, c2[i], container, anchor);
+          i++;
+        }
+      }
+    } else if (i > e2) {
+      while (i <= e1) {
+        // 优化3
+        // (a b) c
+        // (a b)
+        // i = 0,e1 = 2,e2 = 1
+        // i = 2,e1 = 2,e2 = 1
+
+        // 优化4
+        // c (a b)
+        //   (a b)
+        // i = 0,e1 = 2,e2 = 1
+        // i = 0,e1 = 0,e2 = -1
+        unmount(c1[i]);
+        i++;
+      }
+    } else {
+      // a b [c d e] f g
+      // a b [d e h] f g
+      // i = 0,e1 = 6,e2 = 6
+      // 经过优化1的代码后
+      // i = 2,e1 = 6,e2 = 6
+      // 经过优化2的代码后
+      // i = 2,e1 = 4,e2 = 4,
+
+      // 根据新节点创建映射表
+      let s1 = i;
+      let s2 = i;
+      const toBePatched = e2 - s2 + 1; // 要操作的次数
+      const keyToNewIndexMap = new Map();
+
+      for (let i = s2; i <= e2; i++) {
+        keyToNewIndexMap.set(c2[i].key, i);
+      }
+
+      for (let i = s1; i <= e1; i++) {
+        const prevChild = c1[i];
+        const newIndex = keyToNewIndexMap.get(prevChild.key);
+        if (newIndex == undefined) {
+          // 新的存在，老的不存在
+          unmount(prevChild);
+        } else {
+          patch(prevChild, c2[newIndex], container);
+        }
+      }
+
+      // 【移动】 和【新增】的情况
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = s2 + i; // 找到要操作的节点数组中的最后一项索引(h 的索引)
+        const nextChild = c2[nextIndex]; // 找到要操作的节点数组中的最后一项索引(h 这个虚拟节点)
+        const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
+        if (!nextChild.el) {
+          // 新增
+          patch(null, nextChild, container, anchor);
+        } else {
+          // 移动
+          hostInsert(nextChild.el, container, anchor);
+        }
+      }
+    }
+  };
+
   const patchChildren = (n1, n2, el, container) => {
     const c1 = n1.children;
     const c2 = n2.children;
     const prevShapeFlag = n1.shapeFlag;
     const shapeFlag = n2.shapeFlag;
-    debugger;
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        // 现在是文本，之前是数组
+        // 1. 新文本，旧数组
         unmountChildren(c1);
       }
-      hostSetElementText(el, c2);
+      if (c1 !== c2) {
+        // 2. 新文本，旧文本
+        // 3. 新文本，旧空
+        hostSetElementText(el, c2);
+      }
+    } else {
+      // 当前的要么是数组，要么是空
+      // 之前的要么是数组，要么是文本，要么是空
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 4. 新数组，旧数组，全量diff
+          patchedKeyChildren(c1, c2, el);
+        } else {
+          // 5. 旧数组，新空
+          unmountChildren(c1);
+        }
+      } else {
+        // 当前的要么是数组，要么是空
+        // 之前的要么是文本，要么是空
+        if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          // 6. 新数组，旧文本
+          // 7. 新空，旧文本
+          hostSetElementText(el, "");
+        }
+
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 8. 新数组,旧空  新数组，旧文本
+          mountChildren(c2, el);
+        }
+      }
     }
   };
 
@@ -85,10 +222,10 @@ export function createRenderer(options) {
     patchChildren(n1, n2, el, container);
   };
 
-  const processElement = (n1, n2, container) => {
+  const processElement = (n1, n2, container, anchor) => {
     if (n1 == null) {
       // 初始化挂载元素
-      mountElement(n2, container);
+      mountElement(n2, container, anchor);
     } else {
       patchElement(n1, n2, container);
     }
@@ -101,7 +238,7 @@ export function createRenderer(options) {
     }
   };
 
-  const patch = (n1, n2, container) => {
+  const patch = (n1, n2, container, anchor = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
       unmount(n1);
       n1 = null;
@@ -115,7 +252,7 @@ export function createRenderer(options) {
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 是一个元素
-          processElement(n1, n2, container);
+          processElement(n1, n2, container, anchor);
         }
     }
   };

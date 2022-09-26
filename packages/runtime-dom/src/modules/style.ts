@@ -1,4 +1,5 @@
-export const patchStyle = (el, oldStyle, newStyle = {}) => {
+export const patchStyle = (el, oldStyle, newStyle) => {
+  if (!newStyle) newStyle = {};
   const style = el.style;
   for (const key in newStyle) {
     style[key] = newStyle[key];
