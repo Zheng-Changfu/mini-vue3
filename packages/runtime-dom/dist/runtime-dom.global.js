@@ -199,8 +199,10 @@ var VueRuntimeDOM = (() => {
       } else {
         let s1 = i;
         let s2 = i;
+        let j;
         const toBePatched = e2 - s2 + 1;
         const keyToNewIndexMap = /* @__PURE__ */ new Map();
+        const newIndexToOldIndexMap = Array(toBePatched).fill(0);
         for (let i2 = s2; i2 <= e2; i2++) {
           keyToNewIndexMap.set(c2[i2].key, i2);
         }
@@ -210,9 +212,12 @@ var VueRuntimeDOM = (() => {
           if (newIndex == void 0) {
             unmount(prevChild);
           } else {
+            newIndexToOldIndexMap[newIndex - s2] = i2 + 1;
             patch(prevChild, c2[newIndex], container);
           }
         }
+        const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap);
+        j = increasingNewIndexSequence.length - 1;
         for (let i2 = toBePatched - 1; i2 >= 0; i2--) {
           const nextIndex = s2 + i2;
           const nextChild = c2[nextIndex];
@@ -220,7 +225,11 @@ var VueRuntimeDOM = (() => {
           if (!nextChild.el) {
             patch(null, nextChild, container, anchor);
           } else {
-            hostInsert(nextChild.el, container, anchor);
+            if (i2 !== increasingNewIndexSequence[j]) {
+              hostInsert(nextChild.el, container, anchor);
+            } else {
+              j--;
+            }
           }
         }
       }
@@ -307,6 +316,44 @@ var VueRuntimeDOM = (() => {
     return {
       render: render2
     };
+  }
+  function getSequence(arr) {
+    let len = arr.length;
+    let result = [0];
+    let start, end, mid;
+    let p = arr.slice();
+    for (let i2 = 0; i2 < len; i2++) {
+      const arrI = arr[i2];
+      const j = result[result.length - 1];
+      if (arr[j] < arrI) {
+        p[i2] = j;
+        result.push(i2);
+        continue;
+      }
+      start = 0;
+      end = result.length - 1;
+      while (start < end) {
+        mid = start + end >> 1;
+        if (arr[result[mid]] < arrI) {
+          start = mid + 1;
+        } else {
+          end = mid;
+        }
+      }
+      if (arrI < arr[result[start]]) {
+        if (start > 0) {
+          p[i2] = result[start - 1];
+        }
+        result[start] = i2;
+      }
+    }
+    let i = result.length;
+    let lastIndex = result[i - 1];
+    while (i-- > 0) {
+      result[i] = lastIndex;
+      lastIndex = p[lastIndex];
+    }
+    return result;
   }
 
   // packages/reactivity/src/effect.ts

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app">
+  </div>
+
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h } = VueRuntimeDOM
+
+
+    // (a b)
+    // (a b) c
+    // const oldVNodeChildren = [
+    //   h('p', { key: 'a' }, 'a'),
+    //   h('p', { key: 'b' }, 'b'),
+    // ]
+
+    // const newVNodeChildren = [
+    //   h('p', { key: 'a' }, 'a'),
+    //   h('p', { key: 'b' }, 'b'),
+    //   h('p', { key: 'c' }, 'c'),
+    // ]
+
+    //   (a b)
+    // c (a b)
+    // const oldVNodeChildren = [
+    //   h('p', { key: 'a' }, 'a'),
+    //   h('p', { key: 'b' }, 'b'),
+    // ]
+
+    // const newVNodeChildren = [
+    //   h('p', { key: 'c' }, 'c'),
+    //   h('p', { key: 'a' }, 'a'),
+    //   h('p', { key: 'b' }, 'b'),
+    // ]
+
+    // const oldVNodeChildren = [
+    //   h('p', { key: 'a' }, 'a'),
+    //   h('p', { key: 'b' }, 'b'),
+    //   h('p', { key: 'c' }, 'c'),
+    // ]
+
+    // const newVNodeChildren = [
+    //   h('p', { key: 'a' }, 'a'),
+    //   h('p', { key: 'b' }, 'b'),
+    // ]
+
+    const oldVNodeChildren = [
+      h('p', { key: 'a' }, 'a'),
+      h('p', { key: 'b' }, 'b'),
+      h('p', { key: 'c' }, 'c'),
+      h('p', { key: 'd', style: { color: 'red' } }, 'd'),
+      h('p', { key: 'e' }, 'e'),
+      h('p', { key: 'f' }, 'f'),
+      h('p', { key: 'g' }, 'g'),
+    ]
+
+    const newVNodeChildren = [
+      h('p', { key: 'a' }, 'a'),
+      h('p', { key: 'b' }, 'b'),
+      h('p', { key: 'e' }, 'e'),
+      h('p', { key: 'd', style: { color: 'skyblue' } }, 'd'),
+      h('p', { key: 'h' }, 'h'),
+      h('p', { key: 'f' }, 'f'),
+      h('p', { key: 'g' }, 'g'),
+    ]
+
+    render(h('div', oldVNodeChildren), app)
+
+    setTimeout(() => {
+      render(h('div', newVNodeChildren), app)
+    }, 1000)
+  </script>
+</body>
+
+</html>

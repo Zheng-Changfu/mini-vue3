@@ -137,8 +137,10 @@ export function createRenderer(options) {
       // 根据新节点创建映射表
       let s1 = i;
       let s2 = i;
+      let j;
       const toBePatched = e2 - s2 + 1; // 要操作的次数
       const keyToNewIndexMap = new Map();
+      const newIndexToOldIndexMap = Array(toBePatched).fill(0) // [0,0,0] [d,e,h]
 
       for (let i = s2; i <= e2; i++) {
         keyToNewIndexMap.set(c2[i].key, i);
@@ -151,9 +153,14 @@ export function createRenderer(options) {
           // 新的存在，老的不存在
           unmount(prevChild);
         } else {
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
           patch(prevChild, c2[newIndex], container);
         }
       }
+
+      const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap) // [0,1]
+
+      j = increasingNewIndexSequence.length - 1
 
       // 【移动】 和【新增】的情况
       for (let i = toBePatched - 1; i >= 0; i--) {
@@ -165,7 +172,11 @@ export function createRenderer(options) {
           patch(null, nextChild, container, anchor);
         } else {
           // 移动
-          hostInsert(nextChild.el, container, anchor);
+          if (i !== increasingNewIndexSequence[j]) {
+            hostInsert(nextChild.el, container, anchor);
+          } else {
+            j--
+          }
         }
       }
     }
@@ -278,3 +289,46 @@ export function createRenderer(options) {
     render,
   };
 }
+
+
+function getSequence(arr) {
+  let len = arr.length;
+  let result = [0];
+  let start, end, mid;
+  let p = arr.slice();
+  for (let i = 0; i < len; i++) {
+    const arrI = arr[i];
+    const j = result[result.length - 1];
+    if (arr[j] < arrI) {
+      p[i] = j;
+      result.push(i);
+      continue;
+    }
+    start = 0;
+    end = result.length - 1;
+    while (start < end) {
+      mid = (start + end) >> 1;
+      if (arr[result[mid]] < arrI) {
+        start = mid + 1;
+      } else {
+        end = mid;
+      }
+    }
+
+    if (arrI < arr[result[start]]) {
+      if (start > 0) {
+        p[i] = result[start - 1];
+      }
+      result[start] = i;
+    }
+  }
+
+  let i = result.length;
+  let lastIndex = result[i - 1];
+  while (i-- > 0) {
+    result[i] = lastIndex;
+    lastIndex = p[lastIndex];
+  }
+  return result;
+}
+
