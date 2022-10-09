@@ -12,6 +12,7 @@ export const normalizeVNode = (child) => {
   if (isString(child) || isNumber(child)) {
     return createVNode(Text, null, String(child));
   }
+  return child;
 };
 
 export const createVNode = (type, props, children) => {

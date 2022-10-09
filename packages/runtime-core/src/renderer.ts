@@ -73,7 +73,7 @@ export function createRenderer(options) {
     // i = 2,e1 = 1,e2 = 2
     while (i <= e1 && i <= e2) {
       const n1 = c1[i];
-      const n2 = c2[i];
+      const n2 = normalizeVNode(c2[i]);
       if (isSameVNodeType(n1, n2)) {
         patch(n1, n2, container);
       } else {
@@ -89,7 +89,7 @@ export function createRenderer(options) {
     // i = 0,e1 = -1,e2 = 0
     while (i <= e1 && i <= e2) {
       const n1 = c1[e1];
-      const n2 = c2[e2];
+      const n2 = normalizeVNode(c2[e2]);
       if (isSameVNodeType(n1, n2)) {
         patch(n1, n2, container);
       } else {
@@ -105,7 +105,7 @@ export function createRenderer(options) {
         while (i <= e2) {
           const nextPos = e2 + 1;
           const anchor = nextPos < c2.length ? c2[nextPos].el : null;
-          patch(null, c2[i], container, anchor);
+          patch(null, normalizeVNode(c2[i]), container, anchor);
           i++;
         }
       }
@@ -140,7 +140,7 @@ export function createRenderer(options) {
       let j;
       const toBePatched = e2 - s2 + 1; // 要操作的次数
       const keyToNewIndexMap = new Map();
-      const newIndexToOldIndexMap = Array(toBePatched).fill(0) // [0,0,0] [d,e,h]
+      const newIndexToOldIndexMap = Array(toBePatched).fill(0); // [0,0,0] [d,e,h]
 
       for (let i = s2; i <= e2; i++) {
         keyToNewIndexMap.set(c2[i].key, i);
@@ -153,14 +153,14 @@ export function createRenderer(options) {
           // 新的存在，老的不存在
           unmount(prevChild);
         } else {
-          newIndexToOldIndexMap[newIndex - s2] = i + 1
+          newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container);
         }
       }
 
-      const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap) // [0,1]
+      const increasingNewIndexSequence = getSequence(newIndexToOldIndexMap); // [0,1]
 
-      j = increasingNewIndexSequence.length - 1
+      j = increasingNewIndexSequence.length - 1;
 
       // 【移动】 和【新增】的情况
       for (let i = toBePatched - 1; i >= 0; i--) {
@@ -175,7 +175,7 @@ export function createRenderer(options) {
           if (i !== increasingNewIndexSequence[j]) {
             hostInsert(nextChild.el, container, anchor);
           } else {
-            j--
+            j--;
           }
         }
       }
@@ -246,6 +246,11 @@ export function createRenderer(options) {
     if (n1 == null) {
       const el = (n2.el = hostCreateText(n2.children));
       hostInsert(el, container);
+    } else {
+      const el = (n2.el = n1.el);
+      if (n2.children !== n1.children) {
+        hostSetText(el, n2.children);
+      }
     }
   };
 
@@ -290,7 +295,6 @@ export function createRenderer(options) {
   };
 }
 
-
 function getSequence(arr) {
   let len = arr.length;
   let result = [0];
@@ -331,4 +335,3 @@ function getSequence(arr) {
   }
   return result;
 }
-

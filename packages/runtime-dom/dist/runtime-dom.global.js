@@ -67,6 +67,7 @@ var VueRuntimeDOM = (() => {
     if (isString(child) || isNumber(child)) {
       return createVNode(Text, null, String(child));
     }
+    return child;
   };
   var createVNode = (type, props, children) => {
     var _a;
@@ -163,7 +164,7 @@ var VueRuntimeDOM = (() => {
       let e2 = c2.length - 1;
       while (i <= e1 && i <= e2) {
         const n1 = c1[i];
-        const n2 = c2[i];
+        const n2 = normalizeVNode(c2[i]);
         if (isSameVNodeType(n1, n2)) {
           patch(n1, n2, container);
         } else {
@@ -173,7 +174,7 @@ var VueRuntimeDOM = (() => {
       }
       while (i <= e1 && i <= e2) {
         const n1 = c1[e1];
-        const n2 = c2[e2];
+        const n2 = normalizeVNode(c2[e2]);
         if (isSameVNodeType(n1, n2)) {
           patch(n1, n2, container);
         } else {
@@ -187,7 +188,7 @@ var VueRuntimeDOM = (() => {
           while (i <= e2) {
             const nextPos = e2 + 1;
             const anchor = nextPos < c2.length ? c2[nextPos].el : null;
-            patch(null, c2[i], container, anchor);
+            patch(null, normalizeVNode(c2[i]), container, anchor);
             i++;
           }
         }
@@ -281,6 +282,11 @@ var VueRuntimeDOM = (() => {
       if (n1 == null) {
         const el = n2.el = hostCreateText(n2.children);
         hostInsert(el, container);
+      } else {
+        const el = n2.el = n1.el;
+        if (n2.children !== n1.children) {
+          hostSetText(el, n2.children);
+        }
       }
     };
     const patch = (n1, n2, container, anchor = null) => {
