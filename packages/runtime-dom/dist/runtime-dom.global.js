@@ -34,6 +34,8 @@ var VueRuntimeDOM = (() => {
   // packages/runtime-dom/src/index.ts
   var src_exports = {};
   __export(src_exports, {
+    Fragment: () => Fragment,
+    Text: () => Text,
     computed: () => computed,
     createRenderer: () => createRenderer,
     createVNode: () => createVNode,
@@ -41,6 +43,8 @@ var VueRuntimeDOM = (() => {
     effect: () => effect,
     h: () => h,
     isRef: () => isRef,
+    isSameVNodeType: () => isSameVNodeType,
+    isVNode: () => isVNode,
     reactive: () => reactive,
     ref: () => ref,
     render: () => render,
@@ -60,6 +64,7 @@ var VueRuntimeDOM = (() => {
   // packages/runtime-core/src/vnode.ts
   var isVNode = (val) => !!(val && val.__v_isVNode);
   var Text = Symbol("text");
+  var Fragment = Symbol("fragment");
   var isSameVNodeType = (n1, n2) => {
     return n1.type === n2.type && n1.key === n2.key;
   };
@@ -289,6 +294,13 @@ var VueRuntimeDOM = (() => {
         }
       }
     };
+    const processFragment = (n1, n2, container) => {
+      if (n1 == null) {
+        mountChildren(n2.children, container);
+      } else {
+        patchChildren(n1, n2, container);
+      }
+    };
     const patch = (n1, n2, container, anchor = null) => {
       if (n1 && !isSameVNodeType(n1, n2)) {
         unmount(n1);
@@ -299,6 +311,9 @@ var VueRuntimeDOM = (() => {
         case Text:
           processText(n1, n2, container);
           break;
+        case Fragment:
+          processFragment(n1, n2, container);
+          break;
         default:
           if (shapeFlag & 1 /* ELEMENT */) {
             processElement(n1, n2, container, anchor);
@@ -306,8 +321,12 @@ var VueRuntimeDOM = (() => {
       }
     };
     const unmount = (vnode) => {
-      const { el } = vnode;
-      hostRemove(el);
+      const { el, type } = vnode;
+      if (type === Fragment) {
+        unmountChildren(vnode.children);
+      } else {
+        hostRemove(el);
+      }
     };
     const render2 = (vnode, container) => {
       if (vnode == null) {

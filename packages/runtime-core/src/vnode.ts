@@ -3,6 +3,7 @@ import { isNumber, isString, ShapeFlags } from "@vue/shared";
 export const isVNode = (val) => !!(val && val.__v_isVNode);
 
 export const Text = Symbol("text");
+export const Fragment = Symbol("fragment");
 
 export const isSameVNodeType = (n1, n2) => {
   return n1.type === n2.type && n1.key === n2.key;

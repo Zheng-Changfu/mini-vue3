@@ -1,4 +1,4 @@
-export { createVNode } from "./vnode";
+export { createVNode, isVNode, isSameVNodeType, Text, Fragment } from "./vnode";
 export { h } from "./h";
 export { createRenderer } from "./renderer";
 export {

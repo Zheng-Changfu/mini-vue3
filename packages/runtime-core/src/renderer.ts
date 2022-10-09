@@ -1,5 +1,5 @@
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
-import { isSameVNodeType, normalizeVNode, Text } from "./vnode";
+import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 
 export function createRenderer(options) {
   const {
@@ -254,6 +254,14 @@ export function createRenderer(options) {
     }
   };
 
+  const processFragment = (n1, n2, container) => {
+    if (n1 == null) {
+      mountChildren(n2.children, container);
+    } else {
+      patchChildren(n1, n2, container);
+    }
+  };
+
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
       unmount(n1);
@@ -265,6 +273,9 @@ export function createRenderer(options) {
       case Text:
         processText(n1, n2, container);
         break;
+      case Fragment:
+        processFragment(n1, n2, container);
+        break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 是一个元素
@@ -274,8 +285,12 @@ export function createRenderer(options) {
   };
 
   const unmount = (vnode) => {
-    const { el } = vnode;
-    hostRemove(el);
+    const { el, type } = vnode;
+    if (type === Fragment) {
+      unmountChildren(vnode.children);
+    } else {
+      hostRemove(el);
+    }
   };
 
   const render = (vnode, container) => {
