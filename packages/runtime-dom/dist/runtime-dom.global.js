@@ -384,10 +384,39 @@ var VueRuntimeDOM = (() => {
         }
       }
     }
-    debugger;
     instance.props = reactive(props);
     instance.attrs = attrs;
   }
+
+  // packages/runtime-core/src/componentPublicInstance.ts
+  var publicPropertiesMap = {
+    $attrs: (i) => i.attrs,
+    $props: (i) => i.props
+  };
+  var PublicInstanceProxyHandlers = {
+    get({ _: instance }, key) {
+      const { data, props } = instance;
+      if (hasOwn(data, key)) {
+        return data[key];
+      } else if (hasOwn(props, key)) {
+        return props[key];
+      }
+      const publicGetter = publicPropertiesMap[key];
+      if (publicGetter) {
+        return publicGetter(instance);
+      }
+    },
+    set({ _: instance }, key, value) {
+      const { data, props } = instance;
+      if (hasOwn(data, key)) {
+        data[key] = value;
+        return true;
+      } else if (hasOwn(props, key)) {
+        console.warn("prop is readonly");
+        return false;
+      }
+    }
+  };
 
   // packages/runtime-core/src/component.ts
   var uid = 0;
@@ -401,6 +430,7 @@ var VueRuntimeDOM = (() => {
       effect: null,
       update: null,
       isMounted: false,
+      proxy: null,
       ctx: {},
       data: {},
       props: {},
@@ -413,6 +443,7 @@ var VueRuntimeDOM = (() => {
   function setupComponent(instance) {
     const { props, children } = instance.vnode;
     initProps(instance, props);
+    instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -459,11 +490,11 @@ var VueRuntimeDOM = (() => {
       const state = instance.data = reactive(data());
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
-          const subtree = instance.subTree = render3.call(state, state);
+          const subtree = instance.subTree = render3.call(instance.proxy, state);
           patch(null, subtree, container, anchor);
           instance.isMounted = true;
         } else {
-          const nextTree = render3.call(state, state);
+          const nextTree = render3.call(instance.proxy, state);
           const preTree = instance.subTree;
           patch(preTree, nextTree, container, anchor);
           instance.subTree = nextTree;

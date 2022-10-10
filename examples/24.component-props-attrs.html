@@ -29,6 +29,10 @@
           h('div', this.a), // 访问 data 中的数据
           h('div', this.c), // 访问 props 中的数据
           h('div', this.$attrs.d), // 访问 attrs 中的数据
+          h('div', this.$attrs.f.f), // 访问 attrs 中的数据
+          h('div', this.$props.c), // 访问 attrs 中的数据
+          h('button', { onClick: () => this.a++ }, 'test modifyed data'),
+          h('button', { onClick: () => this.c++ }, 'test modifyed props'),
         ])
       }
     }
@@ -37,7 +41,7 @@
     // attr是不具备响应式的
     // props是具体浅层次响应式的
     // this.$attrs 可以访问 attrs 中的属性
-    const componentVNode = h(component, { c: 3, d: 4, e: { e: 1 } })
+    const componentVNode = h(component, { c: 3, d: 4, e: { e: 1 }, f: { f: 11 } })
     console.log(componentVNode)
     render(componentVNode, app)
 

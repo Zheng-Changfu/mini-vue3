@@ -60,12 +60,12 @@ export function createRenderer(options) {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 初始化
-        const subtree = instance.subTree = render.call(state, state)
+        const subtree = instance.subTree = render.call(instance.proxy, state)
         patch(null, subtree, container, anchor)
         instance.isMounted = true
       } else {
         // 更新
-        const nextTree = render.call(state, state)
+        const nextTree = render.call(instance.proxy, state)
         const preTree = instance.subTree
         patch(preTree, nextTree, container, anchor)
         instance.subTree = nextTree

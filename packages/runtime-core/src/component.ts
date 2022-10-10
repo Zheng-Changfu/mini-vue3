@@ -1,4 +1,5 @@
 import { initProps } from "./componentProps"
+import { PublicInstanceProxyHandlers } from "./componentPublicInstance"
 
 let uid = 0
 
@@ -12,6 +13,7 @@ export function createComponentInstance(vnode) {
     effect: null, // 组件的 effect
     update: null, // 组件更新的方法
     isMounted: false, // 组件是否被挂载
+    proxy: null, // 组件代理
     ctx: {}, // 组件上下文(instance)
     data: {}, // 组件数据
     props: {}, // 组件props
@@ -27,4 +29,5 @@ export function setupComponent(instance) {
   const { props, children } = instance.vnode // props 是完整的外界传的, children 是组件的插槽
   // const { props, children } = component
   initProps(instance, props)
+  instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers)
 }

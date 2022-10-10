@@ -14,7 +14,6 @@ export function initProps(instance, rawProps) {
       }
     }
   }
-  debugger
   instance.props = reactive(props)
   instance.attrs = attrs
 }
