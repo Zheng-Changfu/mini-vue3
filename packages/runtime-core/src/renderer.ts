@@ -1,4 +1,6 @@
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
+import { reactive, ReactiveEffect } from "@vue/reactivity";
+import { createComponentInstance } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 
 export function createRenderer(options) {
@@ -44,6 +46,36 @@ export function createRenderer(options) {
 
     hostInsert(el, container, anchor);
   };
+
+  const mountComponent = (vnode, container, anchor) => {
+    // 1. 创建组件实例
+    const instance = vnode.component = createComponentInstance(vnode)
+    // setupComponent(instance)
+    setupRenderEffect(instance, vnode, container, anchor)
+  }
+
+  const setupRenderEffect = (instance, vnode, container, anchor) => {
+    const { data, render } = instance.type
+    const state = reactive(data())
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        // 初始化
+        const subtree = instance.subTree = render.call(state, state)
+        patch(null, subtree, container, anchor)
+        instance.isMounted = true
+      } else {
+        // 更新
+        const nextTree = render.call(state, state)
+        const preTree = instance.subTree
+        patch(preTree, nextTree, container, anchor)
+        instance.subTree = nextTree
+      }
+    }
+
+    const effect = instance.effect = new ReactiveEffect(componentUpdateFn)
+    const update = instance.update = effect.run.bind(effect)
+    update()
+  }
 
   const patchProps = (oldProps, newProps, el) => {
     for (const key in newProps) {
@@ -262,6 +294,14 @@ export function createRenderer(options) {
     }
   };
 
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 == null) {
+      mountComponent(n2, container, anchor)
+    } else {
+      // 组件更新
+    }
+  }
+
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
       unmount(n1);
@@ -280,6 +320,8 @@ export function createRenderer(options) {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 是一个元素
           processElement(n1, n2, container, anchor);
+        } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+          processComponent(n1, n2, container, anchor)
         }
     }
   };

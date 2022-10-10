@@ -21,7 +21,7 @@ export class ReactiveEffect {
   public parent; // 记录当前的父亲是谁
   public acitve = true; // 当前是否是激活状态
   public deps = []; // 用来清理依赖的
-  constructor(public fn, public options) {}
+  constructor(public fn, public options?) { }
   run() {
     if (!this.acitve) {
       return this.fn();
