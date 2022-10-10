@@ -1,4 +1,7 @@
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
+import { reactive, ReactiveEffect } from "@vue/reactivity";
+import { createComponentInstance, setupComponent } from "./component";
+
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 
 export function createRenderer(options) {
@@ -45,6 +48,43 @@ export function createRenderer(options) {
     hostInsert(el, container, anchor);
   };
 
+  const mountComponent = (vnode, container, anchor) => {
+    // 1. 创建一个组件的实例
+    const instance = vnode.component = createComponentInstance(vnode)
+    // 2. 初始化props、slots...
+    setupComponent(instance)
+    // 3. 挂载这个组件
+    setupRenderEffect(instance, container, anchor)
+  }
+
+  const setupRenderEffect = (instance, container, anchor) => {
+    const { data, render } = instance.type
+    const state = instance.data = reactive(data())
+    // 只要响应式数据在effect中使用了，会收集依赖
+
+    // effect(() =>{})
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        // 是挂载
+        const subTree = instance.subTree = render.call(instance.proxy)
+        patch(null, subTree, container, anchor)
+        instance.isMounted = true
+      } else {
+        // 是更新
+        const nextTree = render.call(instance.proxy)
+        const prevTree = instance.subTree
+        patch(prevTree, nextTree, container, anchor)
+        instance.subTree = nextTree
+      }
+    }
+
+    // vue的组件有什么好处？vue的更新是按照组件级别更新的
+
+    const effect = instance.effect = new ReactiveEffect(componentUpdateFn)
+    const update = instance.update = effect.run.bind(effect)
+    update()
+  }
+
   const patchProps = (oldProps, newProps, el) => {
     for (const key in newProps) {
       hostPatchProp(el, key, oldProps[key], newProps[key]);
@@ -73,6 +113,7 @@ export function createRenderer(options) {
     // i = 2,e1 = 1,e2 = 2
     while (i <= e1 && i <= e2) {
       const n1 = c1[i];
+      // c2[i] ['2222'] '2222'
       const n2 = normalizeVNode(c2[i]);
       if (isSameVNodeType(n1, n2)) {
         patch(n1, n2, container);
@@ -151,7 +192,7 @@ export function createRenderer(options) {
         const newIndex = keyToNewIndexMap.get(prevChild.key);
         if (newIndex == undefined) {
           // 新的存在，老的不存在
-          unmount(prevChild);
+          unmount(prevChild); // 1111
         } else {
           newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container);
@@ -168,7 +209,7 @@ export function createRenderer(options) {
         const nextChild = c2[nextIndex]; // 找到要操作的节点数组中的最后一项索引(h 这个虚拟节点)
         const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
         if (!nextChild.el) {
-          // 新增
+          // 新增 2222
           patch(null, nextChild, container, anchor);
         } else {
           // 移动
@@ -254,13 +295,26 @@ export function createRenderer(options) {
     }
   };
 
+
   const processFragment = (n1, n2, container, anchor) => {
     if (n1 == null) {
-      mountChildren(n2.children, container);
+      // 初始化
+      mountChildren(n2.children, container)
     } else {
-      patchChildren(n1, n2, container, anchor);
+      // 更新
+      const el = n2.el = n1.el
+      patchChildren(n1, n2, el, container)
     }
-  };
+  }
+
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 == null) {
+      // 初始化挂载
+      mountComponent(n2, container, anchor)
+    } else {
+      // 更新
+    }
+  }
 
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
@@ -274,12 +328,15 @@ export function createRenderer(options) {
         processText(n1, n2, container);
         break;
       case Fragment:
-        processFragment(n1, n2, container, anchor);
+        processFragment(n1, n2, container, anchor)
         break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           // 是一个元素
           processElement(n1, n2, container, anchor);
+        } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+          // 是一个组件
+          processComponent(n1, n2, container, anchor)
         }
     }
   };
@@ -287,7 +344,7 @@ export function createRenderer(options) {
   const unmount = (vnode) => {
     const { el, type } = vnode;
     if (type === Fragment) {
-      unmountChildren(vnode.children);
+      unmountChildren(vnode.children)
     } else {
       hostRemove(el);
     }

@@ -1,9 +1,9 @@
-import { isNumber, isString, ShapeFlags } from "@vue/shared";
+import { isNumber, isObject, isString, ShapeFlags } from "@vue/shared";
 
 export const isVNode = (val) => !!(val && val.__v_isVNode);
 
 export const Text = Symbol("text");
-export const Fragment = Symbol("fragment");
+export const Fragment = Symbol('fragment')
 
 export const isSameVNodeType = (n1, n2) => {
   return n1.type === n2.type && n1.key === n2.key;
@@ -17,7 +17,7 @@ export const normalizeVNode = (child) => {
 };
 
 export const createVNode = (type, props, children) => {
-  const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0;
+  const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0;
   const vnode = {
     __v_isVNode: true,
     el: null, // 标记这个虚拟节点对应的真实dom
@@ -29,7 +29,7 @@ export const createVNode = (type, props, children) => {
   };
 
   if (children) {
-    vnode.shapeFlag |= isString(children)
+    vnode.shapeFlag |= isString(children) || isNumber(children)
       ? ShapeFlags.TEXT_CHILDREN
       : ShapeFlags.ARRAY_CHILDREN;
   }

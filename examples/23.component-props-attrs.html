@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h } = VueRuntimeDOM
+    const component = {
+      props: {
+        b: String
+      },
+      data () {
+        return {
+          a: 'a'
+        }
+      },
+      render () {
+        return h('div', [
+          h('div', this.a), // 访问data的数据
+          h('div', this.b), // 访问props的数据
+          h('div', this.$props.b), // 数据props的数据
+          h('div', this.$data.a), // 数据data的数据
+          h('div', this.$attrs.c), // 访问attrs的数据
+          h('button', { onClick: () => this.a = 'aaaa' }, 'test modified data'),
+          h('button', { onClick: () => this.b = 'bbbb' }, 'test modified props'),
+        ])
+      }
+    }
+
+    const componentVNode = h(component, { b: 'b', c: 'c', e: { d: 3 } })
+    render(componentVNode, app)
+
+
+    /*
+    
+    
+    */
+
+  </script>
+</body>
+
+</html>
