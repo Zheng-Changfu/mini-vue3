@@ -1,6 +1,6 @@
 import { isNumber, isString, ShapeFlags } from "@vue/shared";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
-import { createComponentInstance } from "./component";
+import { createComponentInstance, setupComponent } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 
 export function createRenderer(options) {
@@ -50,13 +50,13 @@ export function createRenderer(options) {
   const mountComponent = (vnode, container, anchor) => {
     // 1. 创建组件实例
     const instance = vnode.component = createComponentInstance(vnode)
-    // setupComponent(instance)
+    setupComponent(instance)
     setupRenderEffect(instance, vnode, container, anchor)
   }
 
   const setupRenderEffect = (instance, vnode, container, anchor) => {
     const { data, render } = instance.type
-    const state = reactive(data())
+    const state = instance.data = reactive(data())
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 初始化

@@ -60,6 +60,8 @@ var VueRuntimeDOM = (() => {
   var isArray = (val) => Array.isArray(val);
   var isNumber = (val) => typeof val === "number";
   var isOn = (key) => /^on[^a-z]/.test(key);
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var hasOwn = (obj, key) => hasOwnProperty.call(obj, key);
 
   // packages/runtime-core/src/vnode.ts
   var isVNode = (val) => !!(val && val.__v_isVNode);
@@ -368,6 +370,25 @@ var VueRuntimeDOM = (() => {
     }
   };
 
+  // packages/runtime-core/src/componentProps.ts
+  function initProps(instance, rawProps) {
+    const props = {};
+    const attrs = {};
+    if (rawProps) {
+      for (let key in rawProps) {
+        const value = rawProps[key];
+        if (hasOwn(instance.type.props, key)) {
+          props[key] = value;
+        } else {
+          attrs[key] = value;
+        }
+      }
+    }
+    debugger;
+    instance.props = reactive(props);
+    instance.attrs = attrs;
+  }
+
   // packages/runtime-core/src/component.ts
   var uid = 0;
   function createComponentInstance(vnode) {
@@ -388,6 +409,10 @@ var VueRuntimeDOM = (() => {
     };
     instance.ctx = { _: instance };
     return instance;
+  }
+  function setupComponent(instance) {
+    const { props, children } = instance.vnode;
+    initProps(instance, props);
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -426,11 +451,12 @@ var VueRuntimeDOM = (() => {
     };
     const mountComponent = (vnode, container, anchor) => {
       const instance = vnode.component = createComponentInstance(vnode);
+      setupComponent(instance);
       setupRenderEffect(instance, vnode, container, anchor);
     };
     const setupRenderEffect = (instance, vnode, container, anchor) => {
       const { data, render: render3 } = instance.type;
-      const state = reactive(data());
+      const state = instance.data = reactive(data());
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
           const subtree = instance.subTree = render3.call(state, state);

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h } = VueRuntimeDOM
+    const component = {
+      props: {
+        c: Number,
+        e: Object
+      },
+      data () {
+        return {
+          a: 1,
+        }
+      },
+      render () {
+        return h('div', [
+          h('div', this.a), // 访问 data 中的数据
+          h('div', this.c), // 访问 props 中的数据
+          h('div', this.$attrs.d), // 访问 attrs 中的数据
+        ])
+      }
+    }
+    // attrs和props的关系
+    // 没有在组件prop中声明的都在attr上
+    // attr是不具备响应式的
+    // props是具体浅层次响应式的
+    // this.$attrs 可以访问 attrs 中的属性
+    const componentVNode = h(component, { c: 3, d: 4, e: { e: 1 } })
+    console.log(componentVNode)
+    render(componentVNode, app)
+
+  </script>
+</body>
+
+</html>

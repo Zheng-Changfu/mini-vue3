@@ -1,3 +1,5 @@
+import { initProps } from "./componentProps"
+
 let uid = 0
 
 export function createComponentInstance(vnode) {
@@ -22,6 +24,7 @@ export function createComponentInstance(vnode) {
 }
 
 export function setupComponent(instance) {
-  const component = instance.type
-  
+  const { props, children } = instance.vnode // props 是完整的外界传的, children 是组件的插槽
+  // const { props, children } = component
+  initProps(instance, props)
 }
