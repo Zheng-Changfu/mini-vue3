@@ -71,7 +71,6 @@ export function createRenderer(options) {
         instance.subTree = nextTree
       }
     }
-
     const effect = instance.effect = new ReactiveEffect(componentUpdateFn)
     const update = instance.update = effect.run.bind(effect)
     update()

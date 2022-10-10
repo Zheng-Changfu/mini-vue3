@@ -27,9 +27,7 @@
       // 组件必须要提供render方法,返回组件要渲染的虚拟节点,内部可以访问data中的数据
       render () {
         return h('button', {
-          onClick: () => {
-            this.a++
-          }, style: { 'font-size': '30px' }
+          style: { 'font-size': '30px' }
         }, this.a)
       }
     }
