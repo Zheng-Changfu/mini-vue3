@@ -254,11 +254,11 @@ export function createRenderer(options) {
     }
   };
 
-  const processFragment = (n1, n2, container) => {
+  const processFragment = (n1, n2, container, anchor) => {
     if (n1 == null) {
       mountChildren(n2.children, container);
     } else {
-      patchChildren(n1, n2, container);
+      patchChildren(n1, n2, container, anchor);
     }
   };
 
@@ -274,7 +274,7 @@ export function createRenderer(options) {
         processText(n1, n2, container);
         break;
       case Fragment:
-        processFragment(n1, n2, container);
+        processFragment(n1, n2, container, anchor);
         break;
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
