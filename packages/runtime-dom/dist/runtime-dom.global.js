@@ -452,8 +452,10 @@ var VueRuntimeDOM = (() => {
   };
   var PublicInstanceProxyHandlers = {
     get({ _: instance }, key) {
-      const { data, props } = instance;
-      if (hasOwn(data, key)) {
+      const { data, props, setupState } = instance;
+      if (hasOwn(setupState, key)) {
+        return setupState[key];
+      } else if (hasOwn(data, key)) {
         return data[key];
       } else if (hasOwn(props, key)) {
         return props[key];
@@ -511,14 +513,13 @@ var VueRuntimeDOM = (() => {
       if (isFunction(setupResult)) {
         instance.render = setupResult;
       } else if (isObject(setupResult)) {
-        instance.setupState = setupResult;
+        instance.setupState = proxyRefs(setupResult);
       }
+    }
+    if (!instance.render && render2) {
+      instance.render = render2;
     } else {
-      if (render2) {
-        instance.render = render2;
-      } else {
-        if (template) {
-        }
+      if (template) {
       }
     }
     if (!instance.render) {

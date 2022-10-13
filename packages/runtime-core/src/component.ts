@@ -1,4 +1,5 @@
 import { isFunction, isObject } from "@vue/shared";
+import { proxyRefs } from "@vue/reactivity";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 
@@ -41,17 +42,17 @@ export function setupComponent(instance) {
     if (isFunction(setupResult)) {
       instance.render = setupResult;
     } else if (isObject(setupResult)) {
-      instance.setupState = setupResult;
-    }
-  } else {
-    if (render) {
-      instance.render = render;
-    } else {
-      if (template) {
-        // compiler to render
-      }
+      instance.setupState = proxyRefs(setupResult);
     }
   }
+  if (!instance.render && render) {
+    instance.render = render;
+  } else {
+    if (template) {
+      // compiler to render
+    }
+  }
+
   if (!instance.render) {
     instance.render = () => {};
   }
