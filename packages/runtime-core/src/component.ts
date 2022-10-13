@@ -2,6 +2,7 @@ import { isFunction, isObject } from "@vue/shared";
 import { proxyRefs } from "@vue/reactivity";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
+import { emit } from "./componentEmits";
 
 let uid = 0;
 
@@ -23,9 +24,11 @@ export function createComponentInstance(vnode) {
     slots: {}, // 组件插槽
     exposed: {}, // 当前组件向外暴露的内容,可让外界通过 ref 读取
     setupState: null, // setup 中返回的对象数据
+    emit: null, // emit 分发事件函数
   };
 
   instance.ctx = { _: instance };
+  instance.emit = emit.bind(null, instance);
   return instance;
 }
 
@@ -63,5 +66,8 @@ export function createSetupContext(instance) {
     instance.exposed = exposed || {};
   };
 
-  return {};
+  return {
+    attrs: instance.attrs,
+    emit: instance.emit,
+  };
 }

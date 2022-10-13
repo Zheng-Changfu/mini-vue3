@@ -394,7 +394,7 @@ var VueRuntimeDOM = (() => {
     if (rawProps) {
       for (let key in rawProps) {
         const value = rawProps[key];
-        if (hasOwn(instance.type.props, key)) {
+        if (instance.type.props && hasOwn(instance.type.props, key)) {
           props[key] = value;
         } else {
           attrs[key] = value;
@@ -466,8 +466,10 @@ var VueRuntimeDOM = (() => {
       }
     },
     set({ _: instance }, key, value) {
-      const { data, props } = instance;
-      if (hasOwn(data, key)) {
+      const { data, props, setupState } = instance;
+      if (hasOwn(setupState, key)) {
+        setupState[key] = value;
+      } else if (hasOwn(data, key)) {
         data[key] = value;
         return true;
       } else if (hasOwn(props, key)) {
@@ -476,6 +478,16 @@ var VueRuntimeDOM = (() => {
       }
     }
   };
+
+  // packages/runtime-core/src/componentEmits.ts
+  function emit(instance, eventName, ...args) {
+    const props = instance.vnode.props;
+    const handleName = `on${eventName[0].toUpperCase()}${eventName.slice(1)}`;
+    const handler = props[handleName];
+    if (handler && isFunction(handler)) {
+      handler.call(instance, ...args);
+    }
+  }
 
   // packages/runtime-core/src/component.ts
   var uid = 0;
@@ -496,9 +508,11 @@ var VueRuntimeDOM = (() => {
       attrs: {},
       slots: {},
       exposed: {},
-      setupState: null
+      setupState: null,
+      emit: null
     };
     instance.ctx = { _: instance };
+    instance.emit = emit.bind(null, instance);
     return instance;
   }
   function setupComponent(instance) {
@@ -531,7 +545,10 @@ var VueRuntimeDOM = (() => {
     const expose = (exposed) => {
       instance.exposed = exposed || {};
     };
-    return {};
+    return {
+      attrs: instance.attrs,
+      emit: instance.emit
+    };
   }
 
   // packages/runtime-core/src/renderer.ts

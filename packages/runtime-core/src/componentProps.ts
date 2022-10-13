@@ -7,7 +7,7 @@ export function initProps(instance, rawProps) {
   if (rawProps) {
     for (let key in rawProps) {
       const value = rawProps[key];
-      if (hasOwn(instance.type.props, key)) {
+      if (instance.type.props && hasOwn(instance.type.props, key)) {
         props[key] = value;
       } else {
         attrs[key] = value;

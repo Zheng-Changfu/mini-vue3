@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h, Fragment, toRefs, reactive, ref, unref } = VueRuntimeDOM
+
+    //#region 
+    // setup-props
+    // const SubComponent = {
+    //   props: {
+    //     count: {}
+    //   },
+    //   setup (props, context) {
+    //     console.log(props, 'props')
+    //     return () => {
+    //       return h('h1', props.count)
+    //     }
+    //   }
+    // }
+
+    // const Component = {
+    //   setup () {
+    //     return () => {
+    //       return h(SubComponent, { count: 1 })
+    //     }
+    //   }
+    // }
+
+    // render(h(Component), app)
+    //#endregion
+
+    //#region 
+    // setup-attrs
+    // const SubComponent = {
+    //   setup (props, { attrs }) {
+    //     return () => {
+    //       return h('h1', attrs.count)
+    //     }
+    //   }
+    // }
+
+    // const Component = {
+    //   setup () {
+    //     return () => {
+    //       return h(SubComponent, { count: 1 })
+    //     }
+    //   }
+    // }
+
+    // render(h(Component), app)
+
+    //#endregion
+
+
+    //#region 
+    // setup-emit
+    const SubComponent = {
+      setup (props, { attrs, emit }) {
+        return () => {
+          return h('button', { onClick: () => emit('updateCount') }, 'test-emit')
+        }
+      }
+    }
+
+    const Component = {
+      setup () {
+        const count = ref(1)
+        const setCount = () => count.value++
+        return () => {
+          return h(Fragment, [
+            h('h1', null, unref(count)),
+            h(SubComponent, { onUpdateCount: setCount }),
+          ])
+        }
+      }
+    }
+
+    render(h(Component), app)
+
+      //#endregion
+  </script>
+</body>
+
+</html>
