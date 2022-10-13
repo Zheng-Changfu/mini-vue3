@@ -14,3 +14,5 @@ export {
   proxyRefs,
 } from "@vue/reactivity";
 export { nextTick } from "./scheduler";
+export { getCurrentInstance } from "./component";
+export { useAttrs, useSlots, getContext } from "./apiSetupHeplpers";

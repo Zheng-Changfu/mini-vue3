@@ -78,7 +78,9 @@ export function setupComponent(instance) {
   const { setup, render, template } = instance.type;
   if (setup) {
     const setupContext = (instance.setupContext = createSetupContext(instance));
+    setCurrentInstance(instance);
     const setupResult = setup(instance.props, setupContext); // setup(props,{emit,slots,attrs,expose}){return () =>{}}
+    setCurrentInstance(null);
     if (isFunction(setupResult)) {
       instance.render = setupResult;
     } else {
@@ -115,3 +117,7 @@ function createSetupContext(instance) {
     },
   };
 }
+
+let currentInstance;
+export const getCurrentInstance = () => currentInstance;
+export const setCurrentInstance = (i) => (currentInstance = i);

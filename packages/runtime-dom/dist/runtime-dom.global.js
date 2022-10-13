@@ -41,6 +41,8 @@ var VueRuntimeDOM = (() => {
     createVNode: () => createVNode,
     customRef: () => customRef,
     effect: () => effect,
+    getContext: () => getContext,
+    getCurrentInstance: () => getCurrentInstance,
     h: () => h,
     isRef: () => isRef,
     isSameVNodeType: () => isSameVNodeType,
@@ -52,7 +54,9 @@ var VueRuntimeDOM = (() => {
     render: () => render,
     toRef: () => toRef,
     toRefs: () => toRefs,
-    unref: () => unref
+    unref: () => unref,
+    useAttrs: () => useAttrs,
+    useSlots: () => useSlots
   });
 
   // packages/shared/src/index.ts
@@ -528,7 +532,9 @@ var VueRuntimeDOM = (() => {
     const { setup, render: render2, template } = instance.type;
     if (setup) {
       const setupContext = instance.setupContext = createSetupContext(instance);
+      setCurrentInstance(instance);
       const setupResult = setup(instance.props, setupContext);
+      setCurrentInstance(null);
       if (isFunction(setupResult)) {
         instance.render = setupResult;
       } else {
@@ -562,6 +568,9 @@ var VueRuntimeDOM = (() => {
       }
     };
   }
+  var currentInstance;
+  var getCurrentInstance = () => currentInstance;
+  var setCurrentInstance = (i) => currentInstance = i;
 
   // packages/runtime-core/src/renderer.ts
   function createRenderer(options) {
@@ -888,6 +897,18 @@ var VueRuntimeDOM = (() => {
       lastIndex = p[lastIndex];
     }
     return result;
+  }
+
+  // packages/runtime-core/src/apiSetupHeplpers.ts
+  var useSlots = () => {
+    return getContext().slots;
+  };
+  var useAttrs = () => {
+    return getContext().attrs;
+  };
+  function getContext() {
+    const i = getCurrentInstance();
+    return i.setupContext;
   }
 
   // packages/runtime-dom/src/nodeOps.ts
