@@ -387,6 +387,15 @@ var VueRuntimeDOM = (() => {
     instance.props = reactive(props);
     instance.attrs = attrs;
   }
+  function updateProps(prevProps, nextProps) {
+    for (let key in prevProps) {
+      if (hasOwn(nextProps, key)) {
+        prevProps[key] = nextProps[key];
+      } else {
+        delete prevProps[key];
+      }
+    }
+  }
 
   // packages/runtime-core/src/componentPublicInstance.ts
   var publicPropertiesMap = {
@@ -485,15 +494,27 @@ var VueRuntimeDOM = (() => {
       setupComponent(instance);
       setupRenderEffect(instance, vnode, container, anchor);
     };
+    const updateComponent = (n1, n2) => {
+      const instance = n2.component = n1.component;
+      instance.next = n2;
+      instance.update();
+    };
     const setupRenderEffect = (instance, vnode, container, anchor) => {
       const { data, render: render3 } = instance.type;
-      const state = instance.data = reactive(data());
+      let state;
+      if (data) {
+        state = instance.data = reactive(data());
+      }
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
           const subtree = instance.subTree = render3.call(instance.proxy, state);
           patch(null, subtree, container, anchor);
           instance.isMounted = true;
         } else {
+          const { next } = instance;
+          if (next) {
+            updateComponentPreRender(instance, next);
+          }
           const nextTree = render3.call(instance.proxy, state);
           const preTree = instance.subTree;
           patch(preTree, nextTree, container, anchor);
@@ -503,6 +524,13 @@ var VueRuntimeDOM = (() => {
       const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn);
       const update = instance.update = effect2.run.bind(effect2);
       update();
+    };
+    const updateComponentPreRender = (instance, nextVNode) => {
+      const prevProps = instance.props;
+      const nextProps = nextVNode.props;
+      updateProps(prevProps, nextProps);
+      instance.next = null;
+      instance.vnode = nextVNode;
     };
     const patchProps = (oldProps, newProps, el) => {
       for (const key in newProps) {
@@ -661,6 +689,7 @@ var VueRuntimeDOM = (() => {
       if (n1 == null) {
         mountComponent(n2, container, anchor);
       } else {
+        updateComponent(n1, n2);
       }
     };
     const patch = (n1, n2, container, anchor = null) => {

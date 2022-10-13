@@ -2,6 +2,7 @@ import { isNumber, isString, ShapeFlags } from "@vue/shared";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
 import { createComponentInstance, setupComponent } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
+import { updateProps } from "./componentProps";
 
 export function createRenderer(options) {
   const {
@@ -49,32 +50,56 @@ export function createRenderer(options) {
 
   const mountComponent = (vnode, container, anchor) => {
     // 1. 创建组件实例
-    const instance = vnode.component = createComponentInstance(vnode)
-    setupComponent(instance)
-    setupRenderEffect(instance, vnode, container, anchor)
-  }
+    const instance = (vnode.component = createComponentInstance(vnode));
+    setupComponent(instance);
+    setupRenderEffect(instance, vnode, container, anchor);
+  };
+
+  const updateComponent = (n1, n2) => {
+    // 复用组件实例
+    const instance = (n2.component = n1.component);
+    // 将新的组件虚拟节点挂载到next属性上
+    instance.next = n2;
+    // 通知子组件的effect重新执行
+    instance.update();
+  };
 
   const setupRenderEffect = (instance, vnode, container, anchor) => {
-    const { data, render } = instance.type
-    const state = instance.data = reactive(data())
+    const { data, render } = instance.type;
+    let state;
+    if (data) {
+      state = instance.data = reactive(data());
+    }
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 初始化
-        const subtree = instance.subTree = render.call(instance.proxy, state)
-        patch(null, subtree, container, anchor)
-        instance.isMounted = true
+        const subtree = (instance.subTree = render.call(instance.proxy, state));
+        patch(null, subtree, container, anchor);
+        instance.isMounted = true;
       } else {
         // 更新
-        const nextTree = render.call(instance.proxy, state)
-        const preTree = instance.subTree
-        patch(preTree, nextTree, container, anchor)
-        instance.subTree = nextTree
+        const { next } = instance;
+        if (next) {
+          updateComponentPreRender(instance, next);
+        }
+        const nextTree = render.call(instance.proxy, state);
+        const preTree = instance.subTree;
+        patch(preTree, nextTree, container, anchor);
+        instance.subTree = nextTree;
       }
-    }
-    const effect = instance.effect = new ReactiveEffect(componentUpdateFn)
-    const update = instance.update = effect.run.bind(effect)
-    update()
-  }
+    };
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn));
+    const update = (instance.update = effect.run.bind(effect));
+    update();
+  };
+
+  const updateComponentPreRender = (instance, nextVNode) => {
+    const prevProps = instance.props; // 实例上的props,具备响应式的
+    const nextProps = nextVNode.props; // 组件上的props,包含了attrs的
+    updateProps(prevProps, nextProps);
+    instance.next = null;
+    instance.vnode = nextVNode;
+  };
 
   const patchProps = (oldProps, newProps, el) => {
     for (const key in newProps) {
@@ -295,11 +320,12 @@ export function createRenderer(options) {
 
   const processComponent = (n1, n2, container, anchor) => {
     if (n1 == null) {
-      mountComponent(n2, container, anchor)
+      mountComponent(n2, container, anchor);
     } else {
       // 组件更新
+      updateComponent(n1, n2);
     }
-  }
+  };
 
   const patch = (n1, n2, container, anchor = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
@@ -320,7 +346,7 @@ export function createRenderer(options) {
           // 是一个元素
           processElement(n1, n2, container, anchor);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(n1, n2, container, anchor)
+          processComponent(n1, n2, container, anchor);
         }
     }
   };
