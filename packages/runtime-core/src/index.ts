@@ -13,3 +13,5 @@ export {
   isRef,
   proxyRefs,
 } from "@vue/reactivity";
+export { getCurrentInstance } from "./component";
+export { getContext, useAttrs, useSlots } from "./apiSetupHelpers";

@@ -18,7 +18,6 @@
     const subComponent = {
       setup (props, { slots }) {
         return () => {
-          console.log(h('h1', slots.header()))
           return h(Fragment, [
             h('h1', slots.header()),
             h('h1', slots.content()),

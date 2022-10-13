@@ -41,6 +41,8 @@ var VueRuntimeDOM = (() => {
     createVNode: () => createVNode,
     customRef: () => customRef,
     effect: () => effect,
+    getContext: () => getContext,
+    getCurrentInstance: () => getCurrentInstance,
     h: () => h,
     isRef: () => isRef,
     isSameVNodeType: () => isSameVNodeType,
@@ -51,7 +53,9 @@ var VueRuntimeDOM = (() => {
     render: () => render,
     toRef: () => toRef,
     toRefs: () => toRefs,
-    unref: () => unref
+    unref: () => unref,
+    useAttrs: () => useAttrs,
+    useSlots: () => useSlots
   });
 
   // packages/shared/src/index.ts
@@ -514,6 +518,7 @@ var VueRuntimeDOM = (() => {
       uid: uid++,
       vnode,
       type,
+      setupContext: null,
       subTree: null,
       effect: null,
       update: null,
@@ -532,6 +537,9 @@ var VueRuntimeDOM = (() => {
     instance.emit = emit.bind(null, instance);
     return instance;
   }
+  var currentInstance;
+  var getCurrentInstance = () => currentInstance;
+  var setCurrentInstance = (i) => currentInstance = i;
   function setupComponent(instance) {
     const { props, children } = instance.vnode;
     const Component = instance.type;
@@ -540,8 +548,10 @@ var VueRuntimeDOM = (() => {
     instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
     const { setup, render: render2, template } = Component;
     if (setup) {
-      const setupContext = createSetupContext(instance);
+      const setupContext = instance.setupContext = createSetupContext(instance);
+      setCurrentInstance(instance);
       const setupResult = setup(instance.props, setupContext);
+      setCurrentInstance(null);
       if (isFunction(setupResult)) {
         instance.render = setupResult;
       } else if (isObject(setupResult)) {
@@ -566,7 +576,8 @@ var VueRuntimeDOM = (() => {
     return {
       attrs: instance.attrs,
       emit: instance.emit,
-      slots: instance.slots
+      slots: instance.slots,
+      expose
     };
   }
 
@@ -895,6 +906,18 @@ var VueRuntimeDOM = (() => {
     }
     return result;
   }
+
+  // packages/runtime-core/src/apiSetupHelpers.ts
+  var getContext = () => {
+    const i = getCurrentInstance();
+    return i.setupContext;
+  };
+  var useAttrs = () => {
+    return getContext().attrs;
+  };
+  var useSlots = () => {
+    return getContext().slots;
+  };
 
   // packages/runtime-dom/src/nodeOps.ts
   var nodeOps = {
