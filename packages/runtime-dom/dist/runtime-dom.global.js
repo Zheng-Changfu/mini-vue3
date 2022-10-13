@@ -91,7 +91,16 @@ var VueRuntimeDOM = (() => {
       shapeFlag
     };
     if (children) {
-      vnode.shapeFlag |= isString(children) || isNumber(children) ? 8 /* TEXT_CHILDREN */ : 16 /* ARRAY_CHILDREN */;
+      let type2;
+      if (isArray(children)) {
+        type2 = 16 /* ARRAY_CHILDREN */;
+      } else if (isObject(children)) {
+        type2 = 32 /* SLOTS_CHILDREN */;
+      } else {
+        type2 = 8 /* TEXT_CHILDREN */;
+        children = String(children);
+      }
+      vnode.shapeFlag |= type2;
     }
     return vnode;
   };
@@ -444,6 +453,13 @@ var VueRuntimeDOM = (() => {
     return fn ? resolvedPromise.then(fn) : resolvedPromise;
   }
 
+  // packages/runtime-core/src/componentSlots.ts
+  function initSlots(slots, instance) {
+    if (instance.vnode.shapeFlag & 32 /* SLOTS_CHILDREN */) {
+      instance.slots = slots;
+    }
+  }
+
   // packages/runtime-core/src/component.ts
   var uid = 0;
   function createComponentInstance(vnode) {
@@ -453,6 +469,7 @@ var VueRuntimeDOM = (() => {
       data: {},
       props: {},
       attrs: {},
+      slots: {},
       ctx: null,
       subTree: null,
       vnode,
@@ -468,6 +485,7 @@ var VueRuntimeDOM = (() => {
   var publicPropertiesMap = {
     $attrs: (i) => i.attrs,
     $data: (i) => i.data,
+    $slots: (i) => i.slots,
     $el: (i) => i.vnode.el,
     $nextTick: () => nextTick,
     $props: (i) => {
@@ -505,6 +523,7 @@ var VueRuntimeDOM = (() => {
   function setupComponent(instance) {
     const { props, children } = instance.vnode;
     initProps(props, instance);
+    initSlots(children, instance);
     instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
     const { setup, render: render2, template } = instance.type;
     if (setup) {
@@ -532,6 +551,7 @@ var VueRuntimeDOM = (() => {
   function createSetupContext(instance) {
     return {
       attrs: instance.attrs,
+      slots: instance.slots,
       emit: function emit(eventName, ...args) {
         const props = instance.vnode.props;
         const handlerName = `on${eventName[0].toUpperCase()}${eventName.slice(

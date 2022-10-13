@@ -2,6 +2,7 @@ import { hasOwn, isFunction } from "@vue/shared";
 import { proxyRefs } from "@vue/reactivity";
 import { initProps } from "./componentProps";
 import { nextTick } from "./scheduler";
+import { initSlots } from "./componentSlots";
 
 let uid = 0;
 export function createComponentInstance(vnode) {
@@ -11,6 +12,7 @@ export function createComponentInstance(vnode) {
     data: {}, // 组件的数据
     props: {}, // 组件的props
     attrs: {}, // 组件的attrs
+    slots: {}, // 组件的插槽
     ctx: null, // 组件的上下文
     subTree: null, // 组件内部render函数返回的虚拟节点对象
     vnode, // 组件本身的vnode
@@ -24,11 +26,10 @@ export function createComponentInstance(vnode) {
   return instance;
 }
 
-function emit() {}
-
 const publicPropertiesMap = {
   $attrs: (i) => i.attrs,
   $data: (i) => i.data,
+  $slots: (i) => i.slots,
   $el: (i) => i.vnode.el,
   $nextTick: () => nextTick, // this.$nextTick()
   $props: (i) => {
@@ -71,7 +72,7 @@ export function setupComponent(instance) {
   const { props, children } = instance.vnode;
   // children 是组件的插槽
   initProps(props, instance);
-
+  initSlots(children, instance);
   instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
 
   const { setup, render, template } = instance.type;
@@ -103,6 +104,7 @@ export function setupComponent(instance) {
 function createSetupContext(instance) {
   return {
     attrs: instance.attrs,
+    slots: instance.slots,
     emit: function emit(eventName, ...args) {
       const props = instance.vnode.props;
       const handlerName = `on${eventName[0].toUpperCase()}${eventName.slice(
