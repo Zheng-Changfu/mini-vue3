@@ -77,16 +77,20 @@ export function createRenderer(options) {
         const subtree = (instance.subTree = render.call(instance.proxy, state));
         patch(null, subtree, container, anchor);
         instance.isMounted = true;
+        vnode.el = subtree.el;
       } else {
         // 更新
-        const { next } = instance;
+        let { next, vnode } = instance;
         if (next) {
           updateComponentPreRender(instance, next);
+        } else {
+          next = vnode;
         }
         const nextTree = render.call(instance.proxy, state);
         const preTree = instance.subTree;
         patch(preTree, nextTree, container, anchor);
         instance.subTree = nextTree;
+        next.el = nextTree.el;
       }
     };
     const effect = (instance.effect = new ReactiveEffect(componentUpdateFn, {

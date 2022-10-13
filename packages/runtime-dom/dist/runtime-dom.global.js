@@ -397,10 +397,41 @@ var VueRuntimeDOM = (() => {
     }
   }
 
+  // packages/runtime-core/src/scheduler.ts
+  var queue = [];
+  var isFlushing = false;
+  var resolvedPromise = Promise.resolve();
+  function queueJob(job) {
+    if (!queue.length || !queue.includes(job)) {
+      queue.push(job);
+      queueFlash();
+    }
+  }
+  function queueFlash() {
+    if (!isFlushing) {
+      isFlushing = true;
+      resolvedPromise.then(flushJobs);
+    }
+  }
+  function flushJobs() {
+    for (let i = 0; i < queue.length; i++) {
+      const job = queue[i];
+      job();
+    }
+    queue.length = 0;
+    isFlushing = false;
+  }
+  function nextTick(fn) {
+    console.log(1111);
+    return fn ? resolvedPromise.then(fn) : resolvedPromise;
+  }
+
   // packages/runtime-core/src/componentPublicInstance.ts
   var publicPropertiesMap = {
     $attrs: (i) => i.attrs,
-    $props: (i) => i.props
+    $props: (i) => i.props,
+    $el: (i) => i.vnode.el,
+    $nextTick: (fn) => nextTick.bind(fn)
   };
   var PublicInstanceProxyHandlers = {
     get({ _: instance }, key) {
@@ -453,31 +484,6 @@ var VueRuntimeDOM = (() => {
     const { props, children } = instance.vnode;
     initProps(instance, props);
     instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
-  }
-
-  // packages/runtime-core/src/scheduler.ts
-  var queue = [];
-  var isFlushing = false;
-  var resolvedPromise = Promise.resolve();
-  function queueJob(job) {
-    if (!queue.length || !queue.includes(job)) {
-      queue.push(job);
-      queueFlash();
-    }
-  }
-  function queueFlash() {
-    if (!isFlushing) {
-      isFlushing = true;
-      resolvedPromise.then(flushJobs);
-    }
-  }
-  function flushJobs() {
-    for (let i = 0; i < queue.length; i++) {
-      const job = queue[i];
-      job();
-    }
-    queue.length = 0;
-    isFlushing = false;
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -535,15 +541,19 @@ var VueRuntimeDOM = (() => {
           const subtree = instance.subTree = render3.call(instance.proxy, state);
           patch(null, subtree, container, anchor);
           instance.isMounted = true;
+          vnode.el = subtree.el;
         } else {
-          const { next } = instance;
+          let { next, vnode: vnode2 } = instance;
           if (next) {
             updateComponentPreRender(instance, next);
+          } else {
+            next = vnode2;
           }
           const nextTree = render3.call(instance.proxy, state);
           const preTree = instance.subTree;
           patch(preTree, nextTree, container, anchor);
           instance.subTree = nextTree;
+          next.el = nextTree.el;
         }
       };
       const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn, {

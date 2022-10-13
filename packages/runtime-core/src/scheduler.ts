@@ -27,3 +27,8 @@ function flushJobs() {
   queue.length = 0;
   isFlushing = false; // 执行完一轮更新在开放下一批更新
 }
+
+export function nextTick(fn) {
+  console.log(1111);
+  return fn ? resolvedPromise.then(fn) : resolvedPromise;
+}
