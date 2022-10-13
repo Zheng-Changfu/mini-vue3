@@ -21,6 +21,11 @@ export function createComponentInstance(vnode) {
     update: null, // 组件更新的方法
     isMounted: false, // 组件是否挂载了
     setupContext: null,
+    bm: null, // beforeMount
+    m: null, // mounted
+    bu: null, // beforeUpdate
+    u: null, // updated
+    //
   };
   instance.ctx = { _: instance };
   return instance;
@@ -118,6 +123,13 @@ function createSetupContext(instance) {
   };
 }
 
-let currentInstance;
+export let currentInstance;
 export const getCurrentInstance = () => currentInstance;
 export const setCurrentInstance = (i) => (currentInstance = i);
+
+export const enum LifecycleHooks {
+  BEFORE_MOUNT = "bm",
+  MOUNTED = "m",
+  BEFORE_UPDATE = "bu",
+  UPDATED = "u",
+}

@@ -16,3 +16,9 @@ export {
 export { nextTick } from "./scheduler";
 export { getCurrentInstance } from "./component";
 export { useAttrs, useSlots, getContext } from "./apiSetupHeplpers";
+export {
+  onBeforeMount,
+  onBeforeUpdate,
+  onMounted,
+  onUpdated,
+} from "./apiLifecycle";

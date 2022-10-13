@@ -1,4 +1,4 @@
-import { isNumber, isString, ShapeFlags } from "@vue/shared";
+import { invokerArrayFns, isNumber, isString, ShapeFlags } from "@vue/shared";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
 import { createComponentInstance, setupComponent } from "./component";
 
@@ -54,7 +54,7 @@ export function createRenderer(options) {
     // 1. 创建一个组件的实例
     const instance = (vnode.component = createComponentInstance(vnode));
     // 2. 初始化props、slots...
-    setupComponent(instance);
+    setupComponent(instance); // setup
     // 3. 挂载这个组件
     setupRenderEffect(instance, vnode, container, anchor);
   };
@@ -80,21 +80,34 @@ export function createRenderer(options) {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 是挂载
+        const { bm, m } = instance;
+        if (bm) {
+          invokerArrayFns(bm);
+        }
         const subTree = (instance.subTree = render.call(instance.proxy));
         patch(null, subTree, container, anchor);
         instance.isMounted = true;
         vnode.el = subTree.el; // vue-component ref this.$refs['a'].$el
+        if (m) {
+          invokerArrayFns(m);
+        }
       } else {
         // 是更新
-        const { next } = instance;
+        const { next, bu, u } = instance;
         if (next) {
           componentUpdatePreRender(instance, next);
+        }
+        if (bu) {
+          invokerArrayFns(bu);
         }
         const nextTree = render.call(instance.proxy);
         const prevTree = instance.subTree;
         patch(prevTree, nextTree, container, anchor);
         instance.subTree = nextTree;
         vnode.el = nextTree.el;
+        if (u) {
+          invokerArrayFns(u);
+        }
       }
     };
 

@@ -48,6 +48,10 @@ var VueRuntimeDOM = (() => {
     isSameVNodeType: () => isSameVNodeType,
     isVNode: () => isVNode,
     nextTick: () => nextTick,
+    onBeforeMount: () => onBeforeMount,
+    onBeforeUpdate: () => onBeforeUpdate,
+    onMounted: () => onMounted,
+    onUpdated: () => onUpdated,
     proxyRefs: () => proxyRefs,
     reactive: () => reactive,
     ref: () => ref,
@@ -68,6 +72,11 @@ var VueRuntimeDOM = (() => {
   var isOn = (key) => /^on[^a-z]/.test(key);
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var hasOwn = (obj, key) => isObject(obj) && hasOwnProperty.call(obj, key);
+  var invokerArrayFns = (fns) => {
+    for (let i = 0; i < fns.length; i++) {
+      fns[i]();
+    }
+  };
 
   // packages/runtime-core/src/vnode.ts
   var isVNode = (val) => !!(val && val.__v_isVNode);
@@ -481,7 +490,11 @@ var VueRuntimeDOM = (() => {
       effect: null,
       update: null,
       isMounted: false,
-      setupContext: null
+      setupContext: null,
+      bm: null,
+      m: null,
+      bu: null,
+      u: null
     };
     instance.ctx = { _: instance };
     return instance;
@@ -627,20 +640,33 @@ var VueRuntimeDOM = (() => {
       }
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
+          const { bm, m } = instance;
+          if (bm) {
+            invokerArrayFns(bm);
+          }
           const subTree = instance.subTree = render3.call(instance.proxy);
           patch(null, subTree, container, anchor);
           instance.isMounted = true;
           vnode.el = subTree.el;
+          if (m) {
+            invokerArrayFns(m);
+          }
         } else {
-          const { next } = instance;
+          const { next, bu, u } = instance;
           if (next) {
             componentUpdatePreRender(instance, next);
+          }
+          if (bu) {
+            invokerArrayFns(bu);
           }
           const nextTree = render3.call(instance.proxy);
           const prevTree = instance.subTree;
           patch(prevTree, nextTree, container, anchor);
           instance.subTree = nextTree;
           vnode.el = nextTree.el;
+          if (u) {
+            invokerArrayFns(u);
+          }
         }
       };
       const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn, {
@@ -910,6 +936,23 @@ var VueRuntimeDOM = (() => {
     const i = getCurrentInstance();
     return i.setupContext;
   }
+
+  // packages/runtime-core/src/apiLifecycle.ts
+  function injectHook(type, hook, instance) {
+    const hooks = instance[type] || (instance[type] = []);
+    const wrappedHook = () => {
+      setCurrentInstance(instance);
+      const res = hook();
+      setCurrentInstance(null);
+      return res;
+    };
+    hooks.push(wrappedHook);
+  }
+  var createHook = (type) => (hook, instance = currentInstance) => injectHook(type, hook, instance);
+  var onBeforeMount = createHook("bm" /* BEFORE_MOUNT */);
+  var onMounted = createHook("m" /* MOUNTED */);
+  var onBeforeUpdate = createHook("bu" /* BEFORE_UPDATE */);
+  var onUpdated = createHook("u" /* UPDATED */);
 
   // packages/runtime-dom/src/nodeOps.ts
   var nodeOps = {
