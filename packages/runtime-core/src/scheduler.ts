@@ -29,6 +29,5 @@ function flushJobs() {
 }
 
 export function nextTick(fn) {
-  console.log(1111);
   return fn ? resolvedPromise.then(fn) : resolvedPromise;
 }
