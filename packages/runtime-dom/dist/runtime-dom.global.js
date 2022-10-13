@@ -475,15 +475,45 @@ var VueRuntimeDOM = (() => {
       data: {},
       props: {},
       attrs: {},
-      slots: {}
+      slots: {},
+      exposed: {},
+      setupState: null
     };
     instance.ctx = { _: instance };
     return instance;
   }
   function setupComponent(instance) {
     const { props, children } = instance.vnode;
+    const Component = instance.type;
     initProps(instance, props);
     instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
+    const { setup, render: render2, template } = Component;
+    if (setup) {
+      const setupContext = createSetupContext(instance);
+      const setupResult = setup(instance.props, setupContext);
+      if (isFunction(setupResult)) {
+        instance.render = setupResult;
+      } else if (isObject(setupResult)) {
+        instance.setupState = setupResult;
+      }
+    } else {
+      if (render2) {
+        instance.render = render2;
+      } else {
+        if (template) {
+        }
+      }
+    }
+    if (!instance.render) {
+      instance.render = () => {
+      };
+    }
+  }
+  function createSetupContext(instance) {
+    const expose = (exposed) => {
+      instance.exposed = exposed || {};
+    };
+    return {};
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -531,7 +561,8 @@ var VueRuntimeDOM = (() => {
       instance.update();
     };
     const setupRenderEffect = (instance, vnode, container, anchor) => {
-      const { data, render: render3 } = instance.type;
+      const { render: render3 } = instance;
+      const { data } = instance.type;
       let state;
       if (data) {
         state = instance.data = reactive(data());

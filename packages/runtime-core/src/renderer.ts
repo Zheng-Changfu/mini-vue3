@@ -66,7 +66,8 @@ export function createRenderer(options) {
   };
 
   const setupRenderEffect = (instance, vnode, container, anchor) => {
-    const { data, render } = instance.type;
+    const { render } = instance;
+    const { data } = instance.type;
     let state;
     if (data) {
       state = instance.data = reactive(data());
