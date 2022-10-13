@@ -1,4 +1,5 @@
 import { hasOwn, isFunction } from "@vue/shared";
+import { proxyRefs } from "@vue/reactivity";
 import { initProps } from "./componentProps";
 import { nextTick } from "./scheduler";
 
@@ -36,9 +37,10 @@ const publicPropertiesMap = {
 
 const PublicComponentProxyHandlers = {
   get(instance, key) {
-    debugger;
-    const { data, props } = instance;
-    if (hasOwn(data, key)) {
+    const { data, props, setupState } = instance;
+    if (hasOwn(setupState, key)) {
+      return setupState[key];
+    } else if (hasOwn(data, key)) {
       return data[key];
     } else if (hasOwn(props, key)) {
       return props[key];
@@ -50,8 +52,10 @@ const PublicComponentProxyHandlers = {
     }
   },
   set(instance, key, value) {
-    const { data, props } = instance;
-    if (hasOwn(data, key)) {
+    const { data, props, setupState } = instance;
+    if (hasOwn(setupState, key)) {
+      setupState[key] = value; //
+    } else if (hasOwn(data, key)) {
       data[key] = value;
       return true;
     } else if (hasOwn(props, key)) {
@@ -76,7 +80,7 @@ export function setupComponent(instance) {
     if (isFunction(setupResult)) {
       instance.render = setupResult;
     } else {
-      instance.setupState = setupResult;
+      instance.setupState = proxyRefs(setupResult);
     }
   }
   if (!instance.render) {
