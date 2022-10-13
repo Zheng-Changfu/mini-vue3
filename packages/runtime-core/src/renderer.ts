@@ -56,7 +56,7 @@ export function createRenderer(options) {
     // 2. 初始化props、slots...
     setupComponent(instance);
     // 3. 挂载这个组件
-    setupRenderEffect(instance, container, anchor);
+    setupRenderEffect(instance, vnode, container, anchor);
   };
 
   const componentUpdatePreRender = (instance, next) => {
@@ -67,7 +67,7 @@ export function createRenderer(options) {
     instance.vnode = next;
   };
 
-  const setupRenderEffect = (instance, container, anchor) => {
+  const setupRenderEffect = (instance, vnode, container, anchor) => {
     const { data, render } = instance.type;
     let state;
     if (data) {
@@ -82,6 +82,7 @@ export function createRenderer(options) {
         const subTree = (instance.subTree = render.call(instance.proxy));
         patch(null, subTree, container, anchor);
         instance.isMounted = true;
+        vnode.el = subTree.el; // vue-component ref this.$refs['a'].$el
       } else {
         // 是更新
         const { next } = instance;
@@ -92,6 +93,7 @@ export function createRenderer(options) {
         const prevTree = instance.subTree;
         patch(prevTree, nextTree, container, anchor);
         instance.subTree = nextTree;
+        vnode.el = nextTree.el;
       }
     };
 

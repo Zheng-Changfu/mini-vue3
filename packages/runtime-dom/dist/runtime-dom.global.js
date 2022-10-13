@@ -45,6 +45,7 @@ var VueRuntimeDOM = (() => {
     isRef: () => isRef,
     isSameVNodeType: () => isSameVNodeType,
     isVNode: () => isVNode,
+    nextTick: () => nextTick,
     reactive: () => reactive,
     ref: () => ref,
     render: () => render,
@@ -399,6 +400,33 @@ var VueRuntimeDOM = (() => {
     }
   }
 
+  // packages/runtime-core/src/scheduler.ts
+  var queue = [];
+  var isFlushing = false;
+  var resolvedPromise = Promise.resolve();
+  function queueJob(job) {
+    if (!queue.length || !queue.includes(job)) {
+      queue.push(job);
+      queueFlush();
+    }
+  }
+  function queueFlush() {
+    if (!isFlushing) {
+      isFlushing = true;
+      resolvedPromise.then(flushJob);
+    }
+  }
+  function flushJob() {
+    for (let i = 0; i < queue.length; i++) {
+      queue[i]();
+    }
+    queue.length = 0;
+    isFlushing = false;
+  }
+  function nextTick(fn) {
+    return fn ? resolvedPromise.then(fn) : resolvedPromise;
+  }
+
   // packages/runtime-core/src/component.ts
   var uid = 0;
   function createComponentInstance(vnode) {
@@ -421,6 +449,8 @@ var VueRuntimeDOM = (() => {
   var publicPropertiesMap = {
     $attrs: (i) => i.attrs,
     $data: (i) => i.data,
+    $el: (i) => i.vnode.el,
+    $nextTick: () => nextTick,
     $props: (i) => {
       console.log(i, "i");
       return i.props;
@@ -428,6 +458,7 @@ var VueRuntimeDOM = (() => {
   };
   var PublicComponentProxyHandlers = {
     get(instance, key) {
+      debugger;
       const { data, props } = instance;
       if (hasOwn(data, key)) {
         return data[key];
@@ -454,30 +485,6 @@ var VueRuntimeDOM = (() => {
     const { props, children } = instance.vnode;
     initProps(props, instance);
     instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
-  }
-
-  // packages/runtime-core/src/scheduler.ts
-  var queue = [];
-  var isFlushing = false;
-  var resolvedPromise = Promise.resolve();
-  function queueJob(job) {
-    if (!queue.length || !queue.includes(job)) {
-      queue.push(job);
-      queueFlush();
-    }
-  }
-  function queueFlush() {
-    if (!isFlushing) {
-      isFlushing = true;
-      resolvedPromise.then(flushJob);
-    }
-  }
-  function flushJob() {
-    for (let i = 0; i < queue.length; i++) {
-      queue[i]();
-    }
-    queue.length = 0;
-    isFlushing = false;
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -517,7 +524,7 @@ var VueRuntimeDOM = (() => {
     const mountComponent = (vnode, container, anchor) => {
       const instance = vnode.component = createComponentInstance(vnode);
       setupComponent(instance);
-      setupRenderEffect(instance, container, anchor);
+      setupRenderEffect(instance, vnode, container, anchor);
     };
     const componentUpdatePreRender = (instance, next) => {
       const prevProps = instance.props;
@@ -526,7 +533,7 @@ var VueRuntimeDOM = (() => {
       instance.next = null;
       instance.vnode = next;
     };
-    const setupRenderEffect = (instance, container, anchor) => {
+    const setupRenderEffect = (instance, vnode, container, anchor) => {
       const { data, render: render3 } = instance.type;
       let state;
       if (data) {
@@ -537,6 +544,7 @@ var VueRuntimeDOM = (() => {
           const subTree = instance.subTree = render3.call(instance.proxy);
           patch(null, subTree, container, anchor);
           instance.isMounted = true;
+          vnode.el = subTree.el;
         } else {
           const { next } = instance;
           if (next) {
@@ -546,6 +554,7 @@ var VueRuntimeDOM = (() => {
           const prevTree = instance.subTree;
           patch(prevTree, nextTree, container, anchor);
           instance.subTree = nextTree;
+          vnode.el = nextTree.el;
         }
       };
       const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn, {

@@ -12,3 +12,4 @@ export {
   effect,
   isRef,
 } from "@vue/reactivity";
+export { nextTick } from "./scheduler";

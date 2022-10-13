@@ -1,7 +1,8 @@
-import { hasOwn } from "@vue/shared"
-import { initProps } from "./componentProps"
+import { hasOwn } from "@vue/shared";
+import { initProps } from "./componentProps";
+import { nextTick } from "./scheduler";
 
-let uid = 0
+let uid = 0;
 export function createComponentInstance(vnode) {
   const instance = {
     uid: uid++, // 组件唯一id
@@ -15,48 +16,54 @@ export function createComponentInstance(vnode) {
     effect: null, // 组件的effect
     update: null, // 组件更新的方法
     isMounted: false, // 组件是否挂载了
-  }
-  instance.ctx = { _: instance }
-  return instance
+  };
+  instance.ctx = { _: instance };
+  return instance;
 }
 
 const publicPropertiesMap = {
-  $attrs: i => i.attrs,
-  $data: i => i.data,
-  $props: i => { console.log(i, 'i'); return i.props }
-}
+  $attrs: (i) => i.attrs,
+  $data: (i) => i.data,
+  $el: (i) => i.vnode.el,
+  $nextTick: () => nextTick, // this.$nextTick()
+  $props: (i) => {
+    console.log(i, "i");
+    return i.props;
+  },
+};
 
 const PublicComponentProxyHandlers = {
   get(instance, key) {
-    const { data, props } = instance
+    debugger;
+    const { data, props } = instance;
     if (hasOwn(data, key)) {
-      return data[key]
+      return data[key];
     } else if (hasOwn(props, key)) {
-      return props[key]
+      return props[key];
     }
-    const publicGetter = publicPropertiesMap[key]
+    const publicGetter = publicPropertiesMap[key];
     // this.$attrs
     if (publicGetter) {
-      return publicGetter(instance)
+      return publicGetter(instance);
     }
   },
   set(instance, key, value) {
-    const { data, props } = instance
+    const { data, props } = instance;
     if (hasOwn(data, key)) {
-      data[key] = value
-      return true
+      data[key] = value;
+      return true;
     } else if (hasOwn(props, key)) {
-      console.warn('props is readonly')
-      return false
+      console.warn("props is readonly");
+      return false;
     }
-  }
-}
+  },
+};
 
 export function setupComponent(instance) {
   // 初始化props和attrs
-  const { props, children } = instance.vnode
+  const { props, children } = instance.vnode;
   // children 是组件的插槽
-  initProps(props, instance)
+  initProps(props, instance);
 
-  instance.proxy = new Proxy(instance, PublicComponentProxyHandlers)
+  instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
 }

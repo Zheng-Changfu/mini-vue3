@@ -23,3 +23,15 @@ function flushJob() {
   queue.length = 0;
   isFlushing = false;
 }
+
+/**
+ * this.count ++
+ * queue: [job]
+ * job() // componentUpdateFn -> render 
+ */
+
+export function nextTick(fn) {
+  return fn ? resolvedPromise.then(fn) : resolvedPromise;
+}
+// await this.$nextTick()
+// this.$nextTick(() =>{})
