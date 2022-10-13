@@ -20,10 +20,12 @@ var VueReactivity = (() => {
   // packages/reactivity/src/index.ts
   var src_exports = {};
   __export(src_exports, {
+    ReactiveEffect: () => ReactiveEffect,
     computed: () => computed,
     customRef: () => customRef,
     effect: () => effect,
     isRef: () => isRef,
+    proxyRefs: () => proxyRefs,
     reactive: () => reactive,
     ref: () => ref,
     toRef: () => toRef,
@@ -288,6 +290,22 @@ var VueReactivity = (() => {
       this.set(newVal);
     }
   };
+  function proxyRefs(objectWithRefs) {
+    return isReactive(objectWithRefs) ? objectWithRefs : new Proxy(objectWithRefs, {
+      get(target, key, receiver) {
+        return unref(Reflect.get(target, key, receiver));
+      },
+      set(target, key, value, receiver) {
+        const oldValue = target[key];
+        if (isRef(oldValue) && !isRef(value)) {
+          oldValue.value = value;
+          return true;
+        } else {
+          return Reflect.set(target, key, value, receiver);
+        }
+      }
+    });
+  }
   return __toCommonJS(src_exports);
 })();
 //# sourceMappingURL=reactivity.global.js.map

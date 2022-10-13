@@ -46,6 +46,7 @@ var VueRuntimeDOM = (() => {
     isSameVNodeType: () => isSameVNodeType,
     isVNode: () => isVNode,
     nextTick: () => nextTick,
+    proxyRefs: () => proxyRefs,
     reactive: () => reactive,
     ref: () => ref,
     render: () => render,
@@ -370,6 +371,22 @@ var VueRuntimeDOM = (() => {
       this.set(newVal);
     }
   };
+  function proxyRefs(objectWithRefs) {
+    return isReactive(objectWithRefs) ? objectWithRefs : new Proxy(objectWithRefs, {
+      get(target, key, receiver) {
+        return unref(Reflect.get(target, key, receiver));
+      },
+      set(target, key, value, receiver) {
+        const oldValue = target[key];
+        if (isRef(oldValue) && !isRef(value)) {
+          oldValue.value = value;
+          return true;
+        } else {
+          return Reflect.set(target, key, value, receiver);
+        }
+      }
+    });
+  }
 
   // packages/runtime-core/src/componentProps.ts
   function initProps(rawProps, instance) {

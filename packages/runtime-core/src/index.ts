@@ -11,5 +11,6 @@ export {
   customRef,
   effect,
   isRef,
+  proxyRefs,
 } from "@vue/reactivity";
 export { nextTick } from "./scheduler";
