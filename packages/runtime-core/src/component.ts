@@ -3,6 +3,7 @@ import { proxyRefs } from "@vue/reactivity";
 import { initProps } from "./componentProps";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 import { emit } from "./componentEmits";
+import { initSlots } from "./componentSlots";
 
 let uid = 0;
 
@@ -36,6 +37,7 @@ export function setupComponent(instance) {
   const { props, children } = instance.vnode; // props 是完整的外界传的, children 是组件的插槽
   const Component = instance.type;
   initProps(instance, props);
+  initSlots(instance, children);
   instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
   // 优先级: setup.render -> component.render -> template
   const { setup, render, template } = Component;
@@ -69,5 +71,6 @@ export function createSetupContext(instance) {
   return {
     attrs: instance.attrs,
     emit: instance.emit,
+    slots: instance.slots,
   };
 }

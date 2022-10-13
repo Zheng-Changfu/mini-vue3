@@ -4,6 +4,7 @@ import { nextTick } from "./scheduler";
 const publicPropertiesMap = {
   $attrs: (i) => i.attrs,
   $props: (i) => i.props,
+  $slots: (i) => i.slots,
   $el: (i) => i.vnode.el,
   $nextTick: (fn) => nextTick.bind(fn),
 };
