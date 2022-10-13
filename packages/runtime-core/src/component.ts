@@ -24,13 +24,14 @@ export function createComponentInstance(vnode) {
   return instance;
 }
 
+function emit() {}
+
 const publicPropertiesMap = {
   $attrs: (i) => i.attrs,
   $data: (i) => i.data,
   $el: (i) => i.vnode.el,
   $nextTick: () => nextTick, // this.$nextTick()
   $props: (i) => {
-    console.log(i, "i");
     return i.props;
   },
 };
@@ -102,5 +103,13 @@ export function setupComponent(instance) {
 function createSetupContext(instance) {
   return {
     attrs: instance.attrs,
+    emit: function emit(eventName, ...args) {
+      const props = instance.vnode.props;
+      const handlerName = `on${eventName[0].toUpperCase()}${eventName.slice(
+        1
+      )}`;
+      const handler = props[handlerName];
+      handler && handler(...args);
+    },
   };
 }

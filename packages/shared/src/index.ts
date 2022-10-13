@@ -10,9 +10,9 @@ export const isNumber = (val) => typeof val === "number";
 
 export const isOn = (key) => /^on[^a-z]/.test(key);
 
-
-const hasOwnProperty = Object.prototype.hasOwnProperty
-export const hasOwn = (obj, key) => hasOwnProperty.call(obj, key)
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+export const hasOwn = (obj, key) =>
+  isObject(obj) && hasOwnProperty.call(obj, key);
 
 export const enum ShapeFlags {
   ELEMENT = 1,

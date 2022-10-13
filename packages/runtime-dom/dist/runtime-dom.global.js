@@ -63,7 +63,7 @@ var VueRuntimeDOM = (() => {
   var isNumber = (val) => typeof val === "number";
   var isOn = (key) => /^on[^a-z]/.test(key);
   var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var hasOwn = (obj, key) => hasOwnProperty.call(obj, key);
+  var hasOwn = (obj, key) => isObject(obj) && hasOwnProperty.call(obj, key);
 
   // packages/runtime-core/src/vnode.ts
   var isVNode = (val) => !!(val && val.__v_isVNode);
@@ -471,7 +471,6 @@ var VueRuntimeDOM = (() => {
     $el: (i) => i.vnode.el,
     $nextTick: () => nextTick,
     $props: (i) => {
-      console.log(i, "i");
       return i.props;
     }
   };
@@ -532,7 +531,15 @@ var VueRuntimeDOM = (() => {
   }
   function createSetupContext(instance) {
     return {
-      attrs: instance.attrs
+      attrs: instance.attrs,
+      emit: function emit(eventName, ...args) {
+        const props = instance.vnode.props;
+        const handlerName = `on${eventName[0].toUpperCase()}${eventName.slice(
+          1
+        )}`;
+        const handler = props[handlerName];
+        handler && handler(...args);
+      }
     };
   }
 
