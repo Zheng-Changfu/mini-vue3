@@ -47,6 +47,10 @@ var VueRuntimeDOM = (() => {
     isRef: () => isRef,
     isSameVNodeType: () => isSameVNodeType,
     isVNode: () => isVNode,
+    onBeforeMount: () => onBeforeMount,
+    onBeforeUpdate: () => onBeforeUpdate,
+    onMounted: () => onMounted,
+    onUpdated: () => onUpdated,
     proxyRefs: () => proxyRefs,
     reactive: () => reactive,
     ref: () => ref,
@@ -65,6 +69,11 @@ var VueRuntimeDOM = (() => {
   var isArray = (val) => Array.isArray(val);
   var isNumber = (val) => typeof val === "number";
   var isOn = (key) => /^on[^a-z]/.test(key);
+  var invokerArrayFns = (fns) => {
+    for (let i = 0; i < fns.length; i++) {
+      fns[i]();
+    }
+  };
   var hasOwnProperty = Object.prototype.hasOwnProperty;
   var hasOwn = (obj, key) => hasOwnProperty.call(obj, key);
 
@@ -634,22 +643,35 @@ var VueRuntimeDOM = (() => {
       }
       const componentUpdateFn = () => {
         if (!instance.isMounted) {
+          const { bm, m } = instance;
+          if (bm) {
+            invokerArrayFns(bm);
+          }
           const subtree = instance.subTree = render3.call(instance.proxy, state);
           patch(null, subtree, container, anchor);
           instance.isMounted = true;
           vnode.el = subtree.el;
+          if (m) {
+            invokerArrayFns(m);
+          }
         } else {
-          let { next, vnode: vnode2 } = instance;
+          let { next, vnode: vnode2, bu, u } = instance;
           if (next) {
             updateComponentPreRender(instance, next);
           } else {
             next = vnode2;
+          }
+          if (bu) {
+            invokerArrayFns(bu);
           }
           const nextTree = render3.call(instance.proxy, state);
           const preTree = instance.subTree;
           patch(preTree, nextTree, container, anchor);
           instance.subTree = nextTree;
           next.el = nextTree.el;
+          if (u) {
+            invokerArrayFns(u);
+          }
         }
       };
       const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn, {
@@ -918,6 +940,22 @@ var VueRuntimeDOM = (() => {
   var useSlots = () => {
     return getContext().slots;
   };
+
+  // packages/runtime-core/src/apiLifecycle.ts
+  var injectHook = (lifecycle, hook, target) => {
+    const hooks = target[lifecycle] || (target[lifecycle] = []);
+    const wrappedHook = () => {
+      setCurrentInstance(target);
+      hook();
+      setCurrentInstance(null);
+    };
+    hooks.push(wrappedHook);
+  };
+  var createHook = (lifecycle) => (hook, target = currentInstance) => injectHook(lifecycle, hook, target);
+  var onBeforeMount = createHook("bm" /* BEFORE_MOUNT */);
+  var onMounted = createHook("m" /* MOUNTED */);
+  var onBeforeUpdate = createHook("bu" /* BEFORE_UPDATE */);
+  var onUpdated = createHook("u" /* UPDATED */);
 
   // packages/runtime-dom/src/nodeOps.ts
   var nodeOps = {

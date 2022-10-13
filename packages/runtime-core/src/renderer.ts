@@ -1,4 +1,4 @@
-import { isNumber, isString, ShapeFlags } from "@vue/shared";
+import { invokerArrayFns, isNumber, isString, ShapeFlags } from "@vue/shared";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
 import { createComponentInstance, setupComponent } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
@@ -75,23 +75,42 @@ export function createRenderer(options) {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         // 初始化
+        const { bm, m } = instance;
+
+        if (bm) {
+          invokerArrayFns(bm);
+        }
+
         const subtree = (instance.subTree = render.call(instance.proxy, state));
         patch(null, subtree, container, anchor);
         instance.isMounted = true;
         vnode.el = subtree.el;
+
+        if (m) {
+          invokerArrayFns(m);
+        }
       } else {
         // 更新
-        let { next, vnode } = instance;
+        let { next, vnode, bu, u } = instance;
         if (next) {
           updateComponentPreRender(instance, next);
         } else {
           next = vnode;
         }
+
+        if (bu) {
+          invokerArrayFns(bu);
+        }
+
         const nextTree = render.call(instance.proxy, state);
         const preTree = instance.subTree;
         patch(preTree, nextTree, container, anchor);
         instance.subTree = nextTree;
         next.el = nextTree.el;
+
+        if (u) {
+          invokerArrayFns(u);
+        }
       }
     };
     const effect = (instance.effect = new ReactiveEffect(componentUpdateFn, {

@@ -7,6 +7,13 @@ import { initSlots } from "./componentSlots";
 
 let uid = 0;
 
+export const enum LifecycleHooks {
+  BEFORE_MOUNT = "bm", // beforeMount
+  MOUNTED = "m", // mounted
+  BEFORE_UPDATE = "bu", // beforeUpdate
+  UPDATED = "u", // updated
+}
+
 export function createComponentInstance(vnode) {
   const type = vnode.type; // {data:fn,render:fn}
   const instance = {

@@ -10,9 +10,14 @@ export const isNumber = (val) => typeof val === "number";
 
 export const isOn = (key) => /^on[^a-z]/.test(key);
 
+export const invokerArrayFns = (fns) => {
+  for (let i = 0; i < fns.length; i++) {
+    fns[i]();
+  }
+};
 
-const hasOwnProperty = Object.prototype.hasOwnProperty
-export const hasOwn = (obj, key) => hasOwnProperty.call(obj, key)
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+export const hasOwn = (obj, key) => hasOwnProperty.call(obj, key);
 
 export const enum ShapeFlags {
   ELEMENT = 1,
