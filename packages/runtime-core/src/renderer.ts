@@ -3,6 +3,7 @@ import { reactive, ReactiveEffect } from "@vue/reactivity";
 import { createComponentInstance, setupComponent } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 import { updateProps } from "./componentProps";
+import { queueJob } from "./scheduler";
 
 export function createRenderer(options) {
   const {
@@ -88,7 +89,9 @@ export function createRenderer(options) {
         instance.subTree = nextTree;
       }
     };
-    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn));
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn, {
+      scheduler: () => queueJob(update),
+    }));
     const update = (instance.update = effect.run.bind(effect));
     update();
   };

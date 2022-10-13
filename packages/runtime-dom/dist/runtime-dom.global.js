@@ -455,6 +455,31 @@ var VueRuntimeDOM = (() => {
     instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers);
   }
 
+  // packages/runtime-core/src/scheduler.ts
+  var queue = [];
+  var isFlushing = false;
+  var resolvedPromise = Promise.resolve();
+  function queueJob(job) {
+    if (!queue.length || !queue.includes(job)) {
+      queue.push(job);
+      queueFlash();
+    }
+  }
+  function queueFlash() {
+    if (!isFlushing) {
+      isFlushing = true;
+      resolvedPromise.then(flushJobs);
+    }
+  }
+  function flushJobs() {
+    for (let i = 0; i < queue.length; i++) {
+      const job = queue[i];
+      job();
+    }
+    queue.length = 0;
+    isFlushing = false;
+  }
+
   // packages/runtime-core/src/renderer.ts
   function createRenderer(options) {
     const {
@@ -521,7 +546,9 @@ var VueRuntimeDOM = (() => {
           instance.subTree = nextTree;
         }
       };
-      const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn);
+      const effect2 = instance.effect = new ReactiveEffect(componentUpdateFn, {
+        scheduler: () => queueJob(update)
+      });
       const update = instance.update = effect2.run.bind(effect2);
       update();
     };
