@@ -4,6 +4,7 @@ import { createComponentInstance, setupComponent } from "./component";
 
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 import { updateProps } from "./componentProps";
+import { queueJob } from "./scheduler";
 
 export function createRenderer(options) {
   const {
@@ -96,7 +97,11 @@ export function createRenderer(options) {
 
     // vue的组件有什么好处？vue的更新是按照组件级别更新的
 
-    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn));
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn, {
+      scheduler: () => {
+        queueJob(update);
+      },
+    }));
     const update = (instance.update = effect.run.bind(effect));
     update();
   };
