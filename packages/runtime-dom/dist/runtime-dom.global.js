@@ -432,6 +432,7 @@ var VueRuntimeDOM = (() => {
   function createComponentInstance(vnode) {
     const instance = {
       uid: uid++,
+      setupState: {},
       data: {},
       props: {},
       attrs: {},
@@ -441,7 +442,8 @@ var VueRuntimeDOM = (() => {
       type: vnode.type,
       effect: null,
       update: null,
-      isMounted: false
+      isMounted: false,
+      setupContext: null
     };
     instance.ctx = { _: instance };
     return instance;
@@ -485,6 +487,33 @@ var VueRuntimeDOM = (() => {
     const { props, children } = instance.vnode;
     initProps(props, instance);
     instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
+    const { setup, render: render2, template } = instance.type;
+    if (setup) {
+      const setupContext = instance.setupContext = createSetupContext(instance);
+      const setupResult = setup(instance.props, setupContext);
+      if (isFunction(setupResult)) {
+        instance.render = setupResult;
+      } else {
+        instance.setupState = setupResult;
+      }
+    }
+    if (!instance.render) {
+      if (isFunction(render2)) {
+        instance.render = render2;
+      } else {
+        if (template) {
+        }
+      }
+    }
+    if (!instance.render) {
+      instance.render = () => {
+      };
+    }
+  }
+  function createSetupContext(instance) {
+    return {
+      attrs: instance.attrs
+    };
   }
 
   // packages/runtime-core/src/renderer.ts
@@ -534,7 +563,8 @@ var VueRuntimeDOM = (() => {
       instance.vnode = next;
     };
     const setupRenderEffect = (instance, vnode, container, anchor) => {
-      const { data, render: render3 } = instance.type;
+      const { data } = instance.type;
+      const { render: render3 } = instance;
       let state;
       if (data) {
         state = instance.data = reactive(data());

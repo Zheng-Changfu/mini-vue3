@@ -1,4 +1,4 @@
-import { hasOwn } from "@vue/shared";
+import { hasOwn, isFunction } from "@vue/shared";
 import { initProps } from "./componentProps";
 import { nextTick } from "./scheduler";
 
@@ -6,6 +6,7 @@ let uid = 0;
 export function createComponentInstance(vnode) {
   const instance = {
     uid: uid++, // 组件唯一id
+    setupState: {}, // setup函数返回的如果是对象，那么这里就是那个对象的数据
     data: {}, // 组件的数据
     props: {}, // 组件的props
     attrs: {}, // 组件的attrs
@@ -16,6 +17,7 @@ export function createComponentInstance(vnode) {
     effect: null, // 组件的effect
     update: null, // 组件更新的方法
     isMounted: false, // 组件是否挂载了
+    setupContext: null,
   };
   instance.ctx = { _: instance };
   return instance;
@@ -66,4 +68,35 @@ export function setupComponent(instance) {
   initProps(props, instance);
 
   instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
+
+  const { setup, render, template } = instance.type;
+  if (setup) {
+    const setupContext = (instance.setupContext = createSetupContext(instance));
+    const setupResult = setup(instance.props, setupContext); // setup(props,{emit,slots,attrs,expose}){return () =>{}}
+    if (isFunction(setupResult)) {
+      instance.render = setupResult;
+    } else {
+      instance.setupState = setupResult;
+    }
+  }
+  if (!instance.render) {
+    if (isFunction(render)) {
+      instance.render = render;
+    } else {
+      if (template) {
+        // 模版编译成render函数
+        // instance.render = compiler(template);
+      }
+    }
+  }
+
+  if (!instance.render) {
+    instance.render = () => {};
+  }
+}
+
+function createSetupContext(instance) {
+  return {
+    attrs: instance.attrs,
+  };
 }
