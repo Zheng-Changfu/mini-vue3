@@ -10,6 +10,8 @@ export const isNumber = (val) => typeof val === "number";
 
 export const isOn = (key) => /^on[^a-z]/.test(key);
 
+export const startsWith = (s, key) => s.startsWith(key);
+
 export const invokerArrayFns = (fns) => {
   for (let i = 0; i < fns.length; i++) {
     fns[i]();
