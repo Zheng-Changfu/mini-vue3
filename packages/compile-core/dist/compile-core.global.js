@@ -65,8 +65,8 @@ var VueCompilerCore = (() => {
     context.offset += length;
     context.column = lastNewPos === -1 ? context.column + length : length - lastNewPos;
   }
-  function getSelection(context, start) {
-    const end = getCursor(context);
+  function getSelection(context, start, end) {
+    end = end || getCursor(context);
     return {
       start,
       end,
@@ -83,6 +83,7 @@ var VueCompilerCore = (() => {
       const s = context.source;
       let node;
       if (startsWith(s, "{{")) {
+        node = parseInterPolation(context);
       } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
       }
       if (!node) {
@@ -91,6 +92,27 @@ var VueCompilerCore = (() => {
       pushNode(nodes, node);
     }
     return nodes;
+  }
+  function parseInterPolation(context) {
+    const start = getCursor(context);
+    const open = "{{";
+    const close = "}}";
+    const endIndex = context.source.indexOf(close, open.length);
+    advanceBy(context, open.length);
+    const innerStart = getCursor(context);
+    const rawContentLength = endIndex - open.length;
+    const content = parseTextData(context, rawContentLength);
+    const innerEnd = getCursor(context);
+    advanceBy(context, close.length);
+    return {
+      type: "INTERPOLATION" /* INTERPOLATION */,
+      content: {
+        type: "SIMPLE_EXPRESSION" /* SIMPLE_EXPRESSION */,
+        content,
+        loc: getSelection(context, innerStart, innerEnd)
+      },
+      loc: getSelection(context, start)
+    };
   }
   function parseText(context) {
     const endTokens = ["<", "{{"];

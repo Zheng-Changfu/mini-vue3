@@ -58,8 +58,8 @@ function advancePositionWithMutation(context, source, length) {
     lastNewPos === -1 ? context.column + length : length - lastNewPos;
 }
 
-function getSelection(context, start) {
-  const end = getCursor(context);
+function getSelection(context, start, end?) {
+  end = end || getCursor(context);
   return {
     start,
     end,
@@ -84,6 +84,7 @@ function parseChildren(context) {
       // {{ <
       // 解析插值语法
       // node = parseFn1
+      node = parseInterPolation(context);
     } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
       // <d
       // node = parseFn2
@@ -97,6 +98,31 @@ function parseChildren(context) {
     pushNode(nodes, node);
   }
   return nodes;
+}
+
+function parseInterPolation(context) {
+  // {{abc}} type
+  const start = getCursor(context);
+  const open = "{{";
+  const close = "}}";
+
+  const endIndex = context.source.indexOf(close, open.length);
+  advanceBy(context, open.length); // 删掉 {{
+  const innerStart = getCursor(context);
+  const rawContentLength = endIndex - open.length;
+  const content = parseTextData(context, rawContentLength);
+  const innerEnd = getCursor(context);
+  advanceBy(context, close.length); // 删除 }}
+
+  return {
+    type: NodeTypes.INTERPOLATION,
+    content: {
+      type: NodeTypes.SIMPLE_EXPRESSION, // 简单表达式
+      content, // abc
+      loc: getSelection(context, innerStart, innerEnd), //
+    },
+    loc: getSelection(context, start),
+  };
 }
 
 function parseText(context) {
