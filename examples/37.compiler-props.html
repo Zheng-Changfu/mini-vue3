@@ -12,7 +12,7 @@
   <script src="../packages/compile-core/dist/compile-core.global.js"></script>
   <script>
     const { baseParse } = VueCompilerCore
-    console.log(baseParse(`<div><span></span></div>`))
+    console.log(baseParse(`<div a=1 b="2" c='3' d =  4 class=' a b   c ' style={width:'140px'}></div>`))
   </script>
 </body>
 

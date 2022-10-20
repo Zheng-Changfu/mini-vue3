@@ -121,7 +121,7 @@ function parseElement(context) {
 
   // tag close
   parseTag(context, "END");
-  element.loc = getSelection(context, element.loc.start); // 
+  element.loc = getSelection(context, element.loc.start); //
   return element;
 }
 
@@ -133,7 +133,7 @@ function parseTag(context, type) {
   advanceSpaces(context); // 尝试跳过空格
 
   // 解析props
-  const props = [];
+  const props = parseAttributes(context);
   // <div a=1></div>
   const isSelfClosing = startsWith(context.source, "/>");
   // <div></div>
@@ -154,6 +154,70 @@ function parseTag(context, type) {
     tag,
     props,
     loc: getSelection(context, start),
+  };
+}
+
+function parseAttributes(context) {
+  const props = []; // <div></div> <div />
+  while (
+    context.source.length > 0 &&
+    !startsWith(context.source, ">") &&
+    !startsWith(context.source, "/>")
+  ) {
+    const attr = parseAttribute(context);
+    // <div a=1 b=2></div>
+    if (attr && attr.name === "class" && attr.value.value) {
+      // class value trim
+      //  a b c
+      attr.value.value = attr.value.value.replace(/\s+/g, " ").trim();
+    }
+
+    props.push(attr);
+    advanceSpaces(context);
+  }
+  return props;
+}
+
+function parseAttribute(context) {
+  const start = getCursor(context);
+  const match = /^[^\t\r\n\f />][^\t\r\n\f />=]*/.exec(context.source);
+  let name = match[0];
+  advanceBy(context, name.length);
+  let value;
+  //  1></div> // 1 '1' "1"
+  if (/^[\t\r\n\f ]*=/.test(context.source)) {
+    advanceSpaces(context);
+    advanceBy(context, 1);
+    advanceSpaces(context);
+    value = parseAttributeValue(context);
+  }
+  return {
+    type: NodeTypes.ATTRIBUTE,
+    name,
+    value,
+    loc: getSelection(context, start),
+  };
+}
+
+function parseAttributeValue(context) {
+  const start = getCursor(context);
+  const quote = context.source[0];
+  const isQuote = quote === '"' || quote === "'";
+  let value;
+  if (isQuote) {
+    advanceBy(context, 1);
+    const index = context.source.indexOf(quote);
+    value = parseTextData(context, index);
+    advanceBy(context, 1);
+  } else {
+    const match = /^[^\t\r\n\f >]+/.exec(context.source);
+    value = parseTextData(context, match[0].length);
+  }
+  const loc = getSelection(context, start);
+  return {
+    type: NodeTypes.TEXT,
+    value,
+    loc,
   };
 }
 
