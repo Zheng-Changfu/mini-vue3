@@ -24,7 +24,95 @@ var VueCompilerCore = (() => {
   });
 
   // packages/compile-core/src/parse.ts
+  function createParseContext(content) {
+    return {
+      line: 1,
+      column: 1,
+      offset: 0,
+      source: content,
+      originalSource: content
+    };
+  }
+  function getCursor(context) {
+    const { line, column, offset } = context;
+    return { line, column, offset };
+  }
+  function isEnd(context) {
+    const s = context.source;
+    return !s;
+  }
+  function startsWith(s, key) {
+    return s.startsWith(key);
+  }
+  function pushNode(nodes, node) {
+    nodes.push(node);
+  }
+  function advanceBy(context, length) {
+    const source = context.source;
+    advancePositionWithMutation(context, source, length);
+    context.source = source.slice(length);
+  }
+  function advancePositionWithMutation(context, source, length) {
+    let linesCount = 0;
+    let lastNewPos = -1;
+    for (let i = 0; i < length; i++) {
+      if (source.charCodeAt(i) === 10) {
+        linesCount++;
+        lastNewPos = i;
+      }
+    }
+    context.line += linesCount;
+    context.offset += length;
+    context.column = lastNewPos === -1 ? context.column + length : length - lastNewPos;
+  }
+  function getSelection(context, start) {
+    const end = getCursor(context);
+    return {
+      start,
+      end,
+      source: context.originalSource.slice(start.offset, end.offset)
+    };
+  }
   function baseParse(content) {
+    const context = createParseContext(content);
+    return parseChildren(context);
+  }
+  function parseChildren(context) {
+    const nodes = [];
+    while (!isEnd(context)) {
+      const s = context.source;
+      let node;
+      if (startsWith(s, "{{")) {
+      } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
+      }
+      if (!node) {
+        node = parseText(context);
+      }
+      pushNode(nodes, node);
+    }
+    return nodes;
+  }
+  function parseText(context) {
+    const endTokens = ["<", "{{"];
+    const start = getCursor(context);
+    let endIndex = context.source.length;
+    for (let i = 0; i < endTokens.length; i++) {
+      const index = context.source.indexOf(endTokens[i], 1);
+      if (index !== -1 && endIndex > index) {
+        endIndex = index;
+      }
+    }
+    const content = parseTextData(context, endIndex);
+    return {
+      type: "TEXT" /* TEXT */,
+      content,
+      loc: getSelection(context, start)
+    };
+  }
+  function parseTextData(context, length) {
+    const rawText = context.source.slice(0, length);
+    advanceBy(context, length);
+    return rawText;
   }
   return __toCommonJS(src_exports);
 })();
