@@ -39,6 +39,8 @@ var VueCompilerCore = (() => {
   }
   function isEnd(context) {
     const s = context.source;
+    if (startsWith(s, "</"))
+      return true;
     return !s;
   }
   function startsWith(s, key) {
@@ -51,6 +53,12 @@ var VueCompilerCore = (() => {
     const source = context.source;
     advancePositionWithMutation(context, source, length);
     context.source = source.slice(length);
+  }
+  function advanceSpaces(context) {
+    const match = /^[\t\r\n\f ]+/.exec(context.source);
+    if (match) {
+      advanceBy(context, match[0].length);
+    }
   }
   function advancePositionWithMutation(context, source, length) {
     let linesCount = 0;
@@ -85,6 +93,7 @@ var VueCompilerCore = (() => {
       if (startsWith(s, "{{")) {
         node = parseInterPolation(context);
       } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
+        node = parseElement(context);
       }
       if (!node) {
         node = parseText(context);
@@ -92,6 +101,37 @@ var VueCompilerCore = (() => {
       pushNode(nodes, node);
     }
     return nodes;
+  }
+  function parseElement(context) {
+    const element = parseTag(context, "START");
+    if (element.isSelfClosing) {
+      return element;
+    }
+    const children = parseChildren(context);
+    element.children = children;
+    parseTag(context, "END");
+    element.loc = getSelection(context, element.loc.start);
+    return element;
+  }
+  function parseTag(context, type) {
+    const start = getCursor(context);
+    const match = /^<\/?([a-z][^\t\r\n\f />]*)/i.exec(context.source);
+    const tag = match[1];
+    advanceBy(context, match[0].length);
+    advanceSpaces(context);
+    const props = [];
+    const isSelfClosing = startsWith(context.source, "/>");
+    advanceBy(context, isSelfClosing ? 2 : 1);
+    if (type === "END")
+      return;
+    return {
+      type: "ELEMENT" /* ELEMENT */,
+      children: [],
+      isSelfClosing,
+      tag,
+      props,
+      loc: getSelection(context, start)
+    };
   }
   function parseInterPolation(context) {
     const start = getCursor(context);

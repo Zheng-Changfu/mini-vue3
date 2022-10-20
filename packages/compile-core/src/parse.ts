@@ -17,6 +17,7 @@ function getCursor(context) {
 
 function isEnd(context) {
   const s = context.source;
+  if (startsWith(s, "</")) return true; // </span>
   return !s;
 }
 
@@ -32,6 +33,13 @@ function advanceBy(context, length) {
   const source = context.source;
   advancePositionWithMutation(context, source, length);
   context.source = source.slice(length);
+}
+
+function advanceSpaces(context) {
+  const match = /^[\t\r\n\f ]+/.exec(context.source);
+  if (match) {
+    advanceBy(context, match[0].length);
+  }
 }
 
 function advancePositionWithMutation(context, source, length) {
@@ -75,7 +83,7 @@ export function baseParse(content) {
 function parseChildren(context) {
   // node
   const nodes = [];
-  //
+  // context === '' context.startsWith('</')
   while (!isEnd(context)) {
     // 解析
     const s = context.source; // 用户传入的字符串
@@ -88,6 +96,7 @@ function parseChildren(context) {
     } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
       // <d
       // node = parseFn2
+      node = parseElement(context);
     }
 
     if (!node) {
@@ -98,6 +107,54 @@ function parseChildren(context) {
     pushNode(nodes, node);
   }
   return nodes;
+}
+
+function parseElement(context) {
+  const element = parseTag(context, "START");
+  if (element.isSelfClosing) {
+    return element;
+  }
+  // <div />
+  // </span></div>
+  const children = parseChildren(context);
+  element.children = children;
+
+  // tag close
+  parseTag(context, "END");
+  element.loc = getSelection(context, element.loc.start); // 
+  return element;
+}
+
+function parseTag(context, type) {
+  const start = getCursor(context);
+  const match = /^<\/?([a-z][^\t\r\n\f />]*)/i.exec(context.source);
+  const tag = match[1]; // div <div
+  advanceBy(context, match[0].length);
+  advanceSpaces(context); // 尝试跳过空格
+
+  // 解析props
+  const props = [];
+  // <div a=1></div>
+  const isSelfClosing = startsWith(context.source, "/>");
+  // <div></div>
+  // <div />
+
+  /**
+   *
+   *
+   */
+  advanceBy(context, isSelfClosing ? 2 : 1);
+
+  if (type === "END") return;
+
+  return {
+    type: NodeTypes.ELEMENT,
+    children: [],
+    isSelfClosing,
+    tag,
+    props,
+    loc: getSelection(context, start),
+  };
 }
 
 function parseInterPolation(context) {
