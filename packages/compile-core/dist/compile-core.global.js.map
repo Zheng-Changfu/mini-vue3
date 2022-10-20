@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/index.ts", "../src/parse.ts"],
+  "sourcesContent": ["export { baseParse } from \"./parse\";\n", "export function baseParse(content) {}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;;;ACAO,WAAS,UAAU,SAAS;AAAA,EAAC;",
+  "names": []
+}
