@@ -157,6 +157,18 @@ var VueCompilerCore = (() => {
       advanceSpaces(context);
       value = parseAttributeValue(context);
     }
+    if (/^(v-[A-Za-z0-9-]|:|\.|@|#)/.test(name)) {
+      const match2 = /(?:^v-([a-z0-9-]+))?(?:(?::|^\.|^@|^#)(\[[^\]]+\]|[^\.]+))?(.+)?$/i.exec(
+        name
+      );
+      const dirName = match2[1] || (startsWith(match2[0], ":") ? "bind" : startsWith(match2[0], "@") ? "on" : "slot");
+      return {
+        type: "DIRECTIVE" /* DIRECTIVE */,
+        name: dirName,
+        exp: value,
+        loc: getSelection(context, start)
+      };
+    }
     return {
       type: "ATTRIBUTE" /* ATTRIBUTE */,
       name,

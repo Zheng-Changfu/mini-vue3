@@ -191,6 +191,29 @@ function parseAttribute(context) {
     advanceSpaces(context);
     value = parseAttributeValue(context);
   }
+
+  if (/^(v-[A-Za-z0-9-]|:|\.|@|#)/.test(name)) {
+    // v-if if v-model model @click
+    const match =
+      /(?:^v-([a-z0-9-]+))?(?:(?::|^\.|^@|^#)(\[[^\]]+\]|[^\.]+))?(.+)?$/i.exec(
+        name
+      );
+    const dirName =
+      match[1] ||
+      (startsWith(match[0], ":")
+        ? "bind"
+        : startsWith(match[0], "@")
+        ? "on"
+        : "slot");
+
+    return {
+      type: NodeTypes.DIRECTIVE,
+      name: dirName,
+      exp: value,
+      loc: getSelection(context, start),
+    };
+  }
+
   return {
     type: NodeTypes.ATTRIBUTE,
     name,
