@@ -178,6 +178,28 @@ function parseAttribute(context) {
   }
   const loc = getSelection(context, start);
 
+  if (/^(v-[A-Za-z0-9-]|:|\.|@|#)/.test(name)) {
+    // 是否为 v-开头的相关指令
+    const match =
+      /(?:^v-([a-z0-9-]+))?(?:(?::|^\.|^@|^#)(\[[^\]]+\]|[^\.]+))?(.+)?$/i.exec(
+        name
+      );
+    const dirName =
+      match[1] ||
+      (startsWith(name, ":") ? "bind" : startsWith(name, "@") ? "on" : "slot");
+
+    return {
+      type: NodeTypes.DIRECTIVE,
+      name: dirName,
+      exp: {
+        type: NodeTypes.SIMPLE_EXPRESSION,
+        content: value.content,
+        loc: value.loc,
+      },
+      loc,
+    };
+  }
+
   return {
     type: NodeTypes.ATTRIBUTE,
     name,
