@@ -19,6 +19,7 @@ function getCursor(context) {
 
 function isEnd(context) {
   const s = context.source;
+  if (startsWith(s, "</")) return true;
   return !s;
 }
 
@@ -61,6 +62,18 @@ function getSelection(context, start) {
   };
 }
 
+function pushNode(nodes, node) {
+  nodes.push(node);
+}
+
+// 截取掉空格
+function advanceSpaces(context) {
+  const match = /^[\t\r\n\f ]+/.exec(context.source);
+  if (match) {
+    advanceBy(context, match[0].length);
+  }
+}
+
 export function baseParse(content) {
   const context = createParserContext(content);
   const start = getCursor(context);
@@ -78,7 +91,7 @@ function parseChildren(context) {
       // node = xxx
     } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
       // 解析标签
-      // node = xxx
+      node = parseElement(context);
     }
     if (!node) {
       // 当成文本
@@ -91,8 +104,47 @@ function parseChildren(context) {
   return nodes;
 }
 
-function pushNode(nodes, node) {
-  nodes.push(node);
+function parseElement(context) {
+  // 标签名，属性，指令，子元素
+  const element = parseTag(context, "START");
+
+  if (element.isSelfClosing) {
+    return element;
+  }
+
+  const children = parseChildren(context);
+  element.children = children;
+  parseTag(context, "END");
+  element.loc = getSelection(context, element.loc.start);
+
+  return element;
+}
+
+function parseTag(context, type) {
+  // tag open
+  const start = getCursor(context);
+  const match = /^<\/?([a-z][^\t\r\n\f />]*)/i.exec(context.source);
+  const tag = match[1];
+
+  advanceBy(context, match[0].length);
+  advanceSpaces(context);
+
+  // 解析props
+  const props = [];
+
+  let isSelfClosing = startsWith(context.source, "/>");
+  advanceBy(context, isSelfClosing ? 2 : 1);
+
+  if (type === "END") return;
+
+  return {
+    type: NodeTypes.ELEMENT,
+    isSelfClosing,
+    tag,
+    props,
+    children: [],
+    loc: getSelection(context, start),
+  };
 }
 
 function parseText(context) {
