@@ -53,8 +53,8 @@ function advancePositionWithMutaiton(context, source, length) {
     lastNewPos === -1 ? context.column + length : length - lastNewPos;
 }
 
-function getSelection(context, start) {
-  const end = getCursor(context);
+function getSelection(context, start, end?) {
+  end = end || getCursor(context);
   return {
     start,
     end,
@@ -74,10 +74,18 @@ function advanceSpaces(context) {
   }
 }
 
+function createRoot(children, loc) {
+  return {
+    type: NodeTypes.ROOT,
+    children,
+    loc,
+  };
+}
+
 export function baseParse(content) {
   const context = createParserContext(content);
   const start = getCursor(context);
-  return parseChildren(context);
+  return createRoot(parseChildren(context), getSelection(context, start));
 }
 
 function parseChildren(context) {
@@ -89,6 +97,7 @@ function parseChildren(context) {
     if (startsWith(s, "{{")) {
       // 解析插值语法
       // node = xxx
+      node = parseInterPolation(context);
     } else if (s[0] === "<" && /[a-z]/i.test(s[1])) {
       // 解析标签
       node = parseElement(context);
@@ -102,6 +111,27 @@ function parseChildren(context) {
   }
 
   return nodes;
+}
+
+function parseInterPolation(context) {
+  const open = "{{";
+  const close = "}}";
+  const start = getCursor(context);
+  const closeIndex = context.source.indexOf(close, open.length);
+  advanceBy(context, open.length);
+  const innerStart = getCursor(context);
+  const rawContentLength = closeIndex - open.length;
+  const content = parseTextData(context, rawContentLength);
+  const innerEnd = getCursor(context);
+  advanceBy(context, close.length);
+  return {
+    type: NodeTypes.INTERPOLATION,
+    content: {
+      content,
+      loc: getSelection(context, innerStart, innerEnd),
+    },
+    loc: getSelection(context, start),
+  };
 }
 
 function parseElement(context) {
