@@ -129,8 +129,8 @@ function parseTag(context, type) {
   advanceBy(context, match[0].length);
   advanceSpaces(context);
 
-  // 解析props
-  const props = [];
+  // 解析属性
+  const props = parseAttributes(context);
 
   let isSelfClosing = startsWith(context.source, "/>");
   advanceBy(context, isSelfClosing ? 2 : 1);
@@ -143,6 +143,71 @@ function parseTag(context, type) {
     tag,
     props,
     children: [],
+    loc: getSelection(context, start),
+  };
+}
+
+function parseAttributes(context) {
+  const props = [];
+  while (
+    context.source.length > 0 &&
+    !startsWith(context.source, ">") &&
+    !startsWith(context.source, "/>")
+  ) {
+    const attr = parseAttribute(context);
+    props.push(attr);
+    advanceSpaces(context);
+  }
+  return props;
+}
+
+function parseAttribute(context) {
+  // name
+  const start = getCursor(context);
+  const match = /^[^\t\r\n\f />][^\t\r\n\f />=]*/.exec(context.source);
+  const name = match[0];
+  advanceBy(context, name.length);
+
+  // value
+  let value;
+  if (/^[\t\r\n\f ]*=/.test(context.source)) {
+    advanceSpaces(context); // 跳过空格
+    advanceBy(context, 1); // 跳过=号
+    advanceSpaces(context); // 跳过空格
+    value = parseAttributeValue(context);
+  }
+  const loc = getSelection(context, start);
+
+  return {
+    type: NodeTypes.ATTRIBUTE,
+    name,
+    value: {
+      type: NodeTypes.TEXT,
+      content: value.content,
+      loc: value.loc,
+    },
+    loc,
+  };
+}
+
+function parseAttributeValue(context) {
+  const start = getCursor(context);
+  let content;
+  const quote = context.source[0];
+  const isQuote = quote === '"' || quote === "'";
+  if (isQuote) {
+    advanceBy(context, 1); // 跳过分号
+    const endIndex = context.source.indexOf(quote);
+    content = parseTextData(context, endIndex);
+    advanceBy(context, 1);
+  } else {
+    const match = /^[^\t\r\n\f >]+/.exec(context.source);
+    content = parseTextData(context, match[0].length);
+  }
+
+  return {
+    content,
+    isQuote,
     loc: getSelection(context, start),
   };
 }
