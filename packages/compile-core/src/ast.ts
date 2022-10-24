@@ -1,3 +1,5 @@
+import { CREATE_ELEMENT_VNODE } from "./runtimeHelpers";
+
 export const enum NodeTypes {
   ROOT = "ROOT",
   ELEMENT = "ELEMENT",
@@ -22,3 +24,36 @@ export const enum NodeTypes {
   JS_CONDITIONAL_EXPRESSION = "JS_CONDITIONAL_EXPRESSION",
   JS_CACHE_EXPRESSION = "JS_CACHE_EXPRESSION",
 }
+
+export const createCompoundExpression = (child, loc) => {
+  return {
+    type: NodeTypes.COMPOUND_EXPRESSION,
+    loc,
+    children: child,
+  };
+};
+
+export const createCallExpression = (callee, args) => {
+  return {
+    type: NodeTypes.JS_CALL_EXPRESSION,
+    callee,
+    args,
+  };
+};
+
+export const createObjectExpression = (properties) => {
+  return {
+    type: NodeTypes.JS_OBJECT_EXPRESSION,
+    properties,
+  };
+};
+
+export const createVNodeCall = (context, tag, props, children) => {
+  context.helper(CREATE_ELEMENT_VNODE);
+  return {
+    type: NodeTypes.VNODE_CALL,
+    tag,
+    props,
+    children,
+  };
+};

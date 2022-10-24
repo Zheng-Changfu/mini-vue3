@@ -127,6 +127,7 @@ function parseInterPolation(context) {
   return {
     type: NodeTypes.INTERPOLATION,
     content: {
+      type: NodeTypes.SIMPLE_EXPRESSION,
       content,
       loc: getSelection(context, innerStart, innerEnd),
     },

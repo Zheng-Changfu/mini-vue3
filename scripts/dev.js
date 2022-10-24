@@ -32,3 +32,17 @@ build({
 }).then(() => {
   console.log("启动成功");
 });
+
+
+/**
+ * vue3
+ * patchFlag createBlock
+ * 
+ * keep-alive
+ * temport
+ * defineAsyncComponent
+ * provide/inject
+ * createApp(App).mount('#app') render(h(),app)
+ * 
+ * 11.151
+ */
