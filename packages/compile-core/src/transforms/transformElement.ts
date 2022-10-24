@@ -12,9 +12,10 @@ export function transformElement(node, context) {
           value: props[i].value.content,
         });
       }
+      // 包装属性的ast节点类型,方便codegen时判断
       const propsExpression =
         properties.length > 0 ? createObjectExpression(properties) : null;
-
+      // 包装属性的ast节点类型,方便codegen时判断
       node.codegenNode = createVNodeCall(
         context,
         vnodeTag,

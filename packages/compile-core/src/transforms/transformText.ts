@@ -9,6 +9,11 @@ function isText(node) {
   return node.type === NodeTypes.TEXT || node.type === NodeTypes.INTERPOLATION;
 }
 
+/**
+  主要是为了做一个合并的功能
+  <div>123 {{abc}}</div>
+  我们上面div的孩子没必要创建2个文本节点，只需要 123 + abc 拼接字符串即可
+ */
 export function transformText(node, context) {
   if (node.type === NodeTypes.ELEMENT) {
     return () => {

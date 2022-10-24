@@ -12,6 +12,7 @@ export function createTransformContext(root, options) {
     currentNode: root,
 
     helper(name) {
+      // 统计方法名称用了多少次，vue源码内部会根据次数做一个字符串的小优化
       const count = context.helpers.get(name) || 0;
       context.helpers.set(name, count + 1);
       return name;
@@ -35,11 +36,12 @@ export function createTransformContext(root, options) {
 }
 
 function traverseNode(node, context) {
-  context.currentNode = node;
+  context.currentNode = node; // 当前遍历的节点
   const { nodeTransforms } = context;
   const exitFns = [];
 
   for (let i = 0; i < nodeTransforms.length; i++) {
+    // 每个transform函数都可以返回一个退出函数，这个退出函数模拟递归的回溯性能, 1->2->3     3->2->1
     const onExit = nodeTransforms[i](node, context);
     if (onExit) {
       exitFns.push(onExit);
@@ -56,7 +58,7 @@ function traverseNode(node, context) {
       traverseChildren(node, context);
       break;
   }
-
+  // 这里是为了在退出函数中执行代码的时候node还是指向对应的节点
   context.currentNode = node;
   let i = exitFns.length;
   while (i--) {
@@ -73,5 +75,5 @@ function traverseChildren(node, context) {
 export function transform(root, options) {
   const context = createTransformContext(root, options);
   traverseNode(root, context);
-  root.helpers = [...context.helpers.keys()]; // 需要用到的方法
+  root.helpers = [...context.helpers.keys()]; // 需要用到的方法，codegen 生成代码的时候会用到
 }

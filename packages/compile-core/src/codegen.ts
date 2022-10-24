@@ -170,7 +170,6 @@ function genNode(node, context) {
 
 // 生成render函数,本质就是通过之前的ast节点类型来生成不同的字符串进行拼接
 export function generate(ast) {
-  debugger;
   const context = createCodeGenContext(ast);
   const hasHelpers = ast.helpers.length > 0;
   genFunctionPreamble(ast, context);
