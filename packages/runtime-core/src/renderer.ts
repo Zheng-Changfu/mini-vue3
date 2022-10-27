@@ -367,6 +367,12 @@ export function createRenderer(options) {
     instance.update(); // 执行 componentUpdateFn
   };
 
+  const internals = {
+    mc: mountChildren,
+    pc: patchChildren,
+    o: options,
+  };
+
   const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
       unmount(n1);
@@ -388,6 +394,8 @@ export function createRenderer(options) {
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           // 是一个组件
           processComponent(n1, n2, container, anchor, parentComponent);
+        } else if (shapeFlag & ShapeFlags.TELEPORT) {
+          type.process(n1, n2, container, anchor, parentComponent, internals);
         }
     }
   };

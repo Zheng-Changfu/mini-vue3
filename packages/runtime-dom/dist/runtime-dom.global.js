@@ -35,6 +35,7 @@ var VueRuntimeDOM = (() => {
   var src_exports = {};
   __export(src_exports, {
     Fragment: () => Fragment,
+    Teleport: () => Teleport,
     Text: () => Text,
     computed: () => computed,
     createRenderer: () => createRenderer,
@@ -81,6 +82,38 @@ var VueRuntimeDOM = (() => {
     }
   };
 
+  // packages/runtime-core/src/components/Teleport.ts
+  var TeleportImpl = {
+    __isTeleport: true,
+    process(n1, n2, container, anchor, parentComponent, internals) {
+      const { children, props } = n2;
+      const {
+        mc: mountChildren,
+        pc: patchChildren,
+        o: { querySelector, insert }
+      } = internals;
+      if (n1 == null) {
+        const target = n2.target = querySelector(props.to);
+        const mount = (children2) => {
+          mountChildren(children2, target, anchor, parentComponent);
+        };
+        mount(children);
+      } else {
+        const target = n2.target = n1.target;
+        patchChildren(n1, n2, target, anchor, parentComponent);
+        if (n1.props.to !== n2.props.to) {
+          const nextTarget = n2.target = querySelector(n2.props.to);
+          const { children: children2 } = n2;
+          for (let i = 0; i < children2.length; i++) {
+            insert(children2[i].el, nextTarget);
+          }
+        }
+      }
+    }
+  };
+  var isTeleport = (v) => !!v.__isTeleport;
+  var Teleport = TeleportImpl;
+
   // packages/runtime-core/src/vnode.ts
   var isVNode = (val) => !!(val && val.__v_isVNode);
   var Text = Symbol("text");
@@ -96,7 +129,7 @@ var VueRuntimeDOM = (() => {
   };
   var createVNode = (type, props, children) => {
     var _a;
-    const shapeFlag = isString(type) ? 1 /* ELEMENT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
+    const shapeFlag = isString(type) ? 1 /* ELEMENT */ : isTeleport(type) ? 64 /* TELEPORT */ : isObject(type) ? 4 /* STATEFUL_COMPONENT */ : 0;
     const vnode = {
       __v_isVNode: true,
       el: null,
@@ -850,6 +883,11 @@ var VueRuntimeDOM = (() => {
       instance.next = n2;
       instance.update();
     };
+    const internals = {
+      mc: mountChildren,
+      pc: patchChildren,
+      o: options
+    };
     const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
       if (n1 && !isSameVNodeType(n1, n2)) {
         unmount(n1);
@@ -868,6 +906,8 @@ var VueRuntimeDOM = (() => {
             processElement(n1, n2, container, anchor, parentComponent);
           } else if (shapeFlag & 4 /* STATEFUL_COMPONENT */) {
             processComponent(n1, n2, container, anchor, parentComponent);
+          } else if (shapeFlag & 64 /* TELEPORT */) {
+            type.process(n1, n2, container, anchor, parentComponent, internals);
           }
       }
     };
