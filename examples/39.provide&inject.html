@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h, provide, inject, ref, getCurrentInstance } = VueRuntimeDOM
+
+    const ageS = Symbol('age')
+
+    const sC = {
+      setup () {
+
+        const age = inject(ageS)
+        // return () => h('h1')
+        return () => h('h1', age.value)
+      },
+    }
+
+    const SubComponent = {
+      setup () {
+        return () => h(sC)
+      },
+    }
+
+    const component = {
+      setup () {
+        const age = ref(18)
+        provide(ageS, age)
+        return {
+          age
+        }
+      },
+      render () {
+        return h('div', null, [
+          h(SubComponent),
+          h('button', { onClick: () => this.age++ }, 'update age')
+        ])
+      }
+    }
+
+    render(h(component), app)
+  </script>
+</body>
+
+</html>

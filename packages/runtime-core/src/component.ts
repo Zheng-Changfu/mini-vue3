@@ -5,8 +5,10 @@ import { nextTick } from "./scheduler";
 import { initSlots } from "./componentSlots";
 
 let uid = 0;
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode, parent) {
   const instance = {
+    parent, // 父级组件实例
+    provides: parent ? parent.provides : Object.create(null),
     uid: uid++, // 组件唯一id
     setupState: {}, // setup函数返回的如果是对象，那么这里就是那个对象的数据
     data: {}, // 组件的数据

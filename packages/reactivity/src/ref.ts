@@ -22,7 +22,6 @@ class RefImpl {
     return this._value;
   }
   set value(val) {
-    console.log(val, "val");
     // val !== this._rawValue
     if (!Object.is(val, this._rawValue)) {
       this._rawValue = val;

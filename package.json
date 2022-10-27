@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node ./scripts/dev.js compile-core --format=global"
+    "dev": "node ./scripts/dev.js runtime-dom --format=global"
   },
   "keywords": [],
   "author": "",
