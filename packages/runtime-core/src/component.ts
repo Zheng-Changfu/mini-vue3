@@ -14,10 +14,12 @@ export const enum LifecycleHooks {
   UPDATED = "u", // updated
 }
 
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode, parent) {
   const type = vnode.type; // {data:fn,render:fn}
   const instance = {
     uid: uid++, // 组件唯一id
+    parent,
+    provides: parent ? parent.provides : Object.create(null), // provide
     vnode, // 组件本身的虚拟节点 h(component) 创建出来的
     type, // 组件对象数据
     setupContext: null, // 组件中的setup参数中的第一个,包含了(attrs,emits,slots,expose)

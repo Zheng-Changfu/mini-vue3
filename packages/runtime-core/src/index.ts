@@ -21,3 +21,4 @@ export {
   onMounted,
   onUpdated,
 } from "./apiLifecycle";
+export { provide, inject } from "./apiInject";
