@@ -383,6 +383,8 @@ export function createRenderer(options) {
           processElement(n1, n2, container, anchor, parentComponent);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
           processComponent(n1, n2, container, anchor, parentComponent);
+        } else if (shapeFlag & ShapeFlags.TELEPORT) {
+          type.process(n1, n2, container, anchor, parentComponent, internals);
         }
     }
   };
@@ -406,6 +408,12 @@ export function createRenderer(options) {
       patch(container._vnode || null, vnode, container);
     }
     container._vnode = vnode;
+  };
+
+  const internals = {
+    mc: mountChildren,
+    pc: patchChildren,
+    o: options,
   };
 
   return {

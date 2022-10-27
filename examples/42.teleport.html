@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="app2"></div>
+  <div id="app3"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h, provide, inject, ref, getCurrentInstance, defineAsyncComponent, Teleport } = VueRuntimeDOM
+
+    render(h('div', null, h(Teleport, { to: '#app2' }, [h('h1', 123)])), app)
+
+
+    setTimeout(() => {
+      render(h('div', null, h(Teleport, { to: '#app3' }, [h('h1', 234)])), app)
+    }, 1000)
+  </script>
+</body>
+
+</html>

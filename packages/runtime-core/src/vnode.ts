@@ -1,4 +1,5 @@
 import { isArray, isNumber, isObject, isString, ShapeFlags } from "@vue/shared";
+import { isTeleport } from "./components/Teleport";
 
 export const isVNode = (val) => !!(val && val.__v_isVNode);
 
@@ -19,6 +20,8 @@ export const normalizeVNode = (child) => {
 export const createVNode = (type, props, children?) => {
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
+    : isTeleport(type)
+    ? ShapeFlags.TELEPORT
     : isObject(type)
     ? ShapeFlags.STATEFUL_COMPONENT
     : 0;

@@ -23,3 +23,4 @@ export {
 } from "./apiLifecycle";
 export { provide, inject } from "./apiInject";
 export { defineAsyncComponent } from "./apiAsyncComponent";
+export { Teleport } from "./components/Teleport";
