@@ -1,7 +1,7 @@
 import { trackEffect, triggerEffect } from "./effect";
 import { isReactive, toReactive } from "./reactive";
 
-export function ref(val) {
+export function ref(val?) {
   if (isRef(val)) {
     return val;
   }
@@ -22,7 +22,6 @@ class RefImpl {
     return this._value;
   }
   set value(val) {
-    console.log(val, "val");
     // val !== this._rawValue
     if (!Object.is(val, this._rawValue)) {
       this._rawValue = val;

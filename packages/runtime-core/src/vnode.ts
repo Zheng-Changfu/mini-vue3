@@ -16,7 +16,7 @@ export const normalizeVNode = (child) => {
   return child;
 };
 
-export const createVNode = (type, props, children) => {
+export const createVNode = (type, props, children?) => {
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
     : isObject(type)
