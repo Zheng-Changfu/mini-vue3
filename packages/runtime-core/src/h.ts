@@ -1,7 +1,7 @@
 import { isArray, isObject } from "@vue/shared";
 import { createVNode, isVNode } from "./vnode";
 
-export function h(type, propsOrChildren, children) {
+export function h(type, propsOrChildren?, children?) {
   const l = arguments.length;
   if (l === 2) {
     // 参数2个的情况
