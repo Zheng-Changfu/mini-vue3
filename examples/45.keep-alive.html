@@ -51,13 +51,13 @@
 
     /*
       keep-alive有且只能有一个子节点
-      max: 最大缓存组件个数,默认Infinity
+      max: 最大缓存组件个数,默认Undefined   cache.length > NaN
       <keep-alive>
         <router-view></router-view>
       </keep-alive>
     */
 
-    const max = 3
+    const max = 2
 
     render(h(KeepAlive, { max }, { default: () => h(component1) }), app)
 

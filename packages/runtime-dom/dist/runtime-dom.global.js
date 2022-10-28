@@ -684,13 +684,14 @@ var VueRuntimeDOM = (() => {
       const pruneCacheEntry = (key) => {
         const cached = cache.get(key);
         if (cached) {
-          unmount(cached, instance);
           resetShapeFlag(cached);
+          unmount(cached, instance);
           cache.delete(key);
           keys.delete(key);
         }
       };
       return () => {
+        debugger;
         const vnode = slots.default();
         const comp = vnode.type;
         const key = vnode.key == null ? comp : vnode.key;
