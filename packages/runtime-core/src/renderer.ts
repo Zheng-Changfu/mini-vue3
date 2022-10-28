@@ -5,6 +5,7 @@ import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 import { updateProps } from "./componentProps";
 import { queueJob } from "./scheduler";
 import { updateSlots } from "./componentSlots";
+import { isKeepAlive } from "./components/KeepAlive";
 
 export function createRenderer(options) {
   const {
@@ -56,6 +57,9 @@ export function createRenderer(options) {
       vnode,
       parentComponent
     ));
+    if (isKeepAlive(vnode.type)) {
+      (instance.ctx as any).renderer = internals;
+    }
     setupComponent(instance);
     setupRenderEffect(instance, vnode, container, anchor);
   };
@@ -108,7 +112,7 @@ export function createRenderer(options) {
 
         const nextTree = render.call(instance.proxy, state);
         const preTree = instance.subTree;
-        patch(preTree, nextTree, container, anchor);
+        patch(preTree, nextTree, container, anchor, instance);
         instance.subTree = nextTree;
         next.el = nextTree.el;
 
@@ -144,13 +148,13 @@ export function createRenderer(options) {
     }
   };
 
-  const unmountChildren = (vnodes) => {
+  const unmountChildren = (vnodes, parentComponent) => {
     for (let i = 0; i < vnodes.length; i++) {
-      unmount(vnodes[i]);
+      unmount(vnodes[i], parentComponent);
     }
   };
 
-  const patchedKeyChildren = (c1, c2, container) => {
+  const patchedKeyChildren = (c1, c2, container, parentComponent) => {
     let i = 0;
     let e1 = c1.length - 1; // 旧数组最后一个下标
     let e2 = c2.length - 1; // 新数组最后一个下标
@@ -210,7 +214,7 @@ export function createRenderer(options) {
         //   (a b)
         // i = 0,e1 = 2,e2 = 1
         // i = 0,e1 = 0,e2 = -1
-        unmount(c1[i]);
+        unmount(c1[i], parentComponent);
         i++;
       }
     } else {
@@ -239,7 +243,7 @@ export function createRenderer(options) {
         const newIndex = keyToNewIndexMap.get(prevChild.key);
         if (newIndex == undefined) {
           // 新的存在，老的不存在
-          unmount(prevChild);
+          unmount(prevChild, parentComponent);
         } else {
           newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container);
@@ -278,7 +282,7 @@ export function createRenderer(options) {
     if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         // 1. 新文本，旧数组
-        unmountChildren(c1);
+        unmountChildren(c1, parentComponent);
       }
       if (c1 !== c2) {
         // 2. 新文本，旧文本
@@ -291,10 +295,10 @@ export function createRenderer(options) {
       if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // 4. 新数组，旧数组，全量diff
-          patchedKeyChildren(c1, c2, el);
+          patchedKeyChildren(c1, c2, el, parentComponent);
         } else {
           // 5. 旧数组，新空
-          unmountChildren(c1);
+          unmountChildren(c1, parentComponent);
         }
       } else {
         // 当前的要么是数组，要么是空
@@ -358,7 +362,11 @@ export function createRenderer(options) {
 
   const processComponent = (n1, n2, container, anchor, parentComponent) => {
     if (n1 == null) {
-      mountComponent(n2, container, anchor, parentComponent);
+      if (n2.shapeFlag & ShapeFlags.COMPONENT_KEPT_ALIVE) {
+        parentComponent.ctx.activate(n2, container, anchor, parentComponent);
+      } else {
+        mountComponent(n2, container, anchor, parentComponent);
+      }
     } else {
       // 组件更新
       updateComponent(n1, n2);
@@ -367,7 +375,7 @@ export function createRenderer(options) {
 
   const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     if (n1 && !isSameVNodeType(n1, n2)) {
-      unmount(n1);
+      unmount(n1, parentComponent);
       n1 = null;
     }
     const { type, shapeFlag } = n2;
@@ -391,7 +399,7 @@ export function createRenderer(options) {
     }
   };
 
-  const unmountComponent = (instance) => {
+  const unmountComponent = (instance, parentComponent) => {
     const { subTree, bum, um } = instance;
     if (bum) {
       invokerArrayFns(bum); // beforeUnmount
@@ -399,19 +407,21 @@ export function createRenderer(options) {
 
     // 停止当前组件的依赖收集,我们没做
 
-    unmount(subTree); // 卸载这个组件对应的真实元素
+    unmount(subTree, parentComponent); // 卸载这个组件对应的真实元素
 
     if (um) {
       invokerArrayFns(um);
     }
   };
 
-  const unmount = (vnode) => {
+  const unmount = (vnode, parentComponent) => {
     const { el, type, shapeFlag } = vnode;
     if (type === Fragment) {
-      unmountChildren(vnode.children);
+      unmountChildren(vnode.children, parentComponent);
+    } else if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
+      parentComponent.ctx.deactivate(vnode);
     } else if (shapeFlag & ShapeFlags.COMPONENT) {
-      unmountComponent(vnode.component);
+      unmountComponent(vnode.component, parentComponent);
     } else {
       hostRemove(el);
     }
@@ -421,7 +431,7 @@ export function createRenderer(options) {
     if (vnode == null) {
       // 卸载
       if (container._vnode) {
-        unmount(container._vnode);
+        unmount(container._vnode, null);
       }
     } else {
       patch(container._vnode || null, vnode, container);
@@ -432,6 +442,7 @@ export function createRenderer(options) {
   const internals = {
     mc: mountChildren,
     pc: patchChildren,
+    um: unmount,
     o: options,
   };
 

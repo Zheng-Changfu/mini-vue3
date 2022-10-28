@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="app2"></div>
+  <div id="app3"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h, ref, KeepAlive } = VueRuntimeDOM
+
+    const name1 = 'component1'
+    const name2 = 'component2'
+    const name3 = 'component3'
+
+    const component1 = {
+      name: name1,
+      key: name1,
+      setup () {
+        console.log(`render ${name1} component`)
+        return () => h('h1', name1)
+      }
+    }
+
+    const component2 = {
+      name: name2,
+      key: name2,
+      setup () {
+        console.log(`render ${name2} component`)
+        return () => h('h1', name2)
+      }
+    }
+
+    const component3 = {
+      name: name3,
+      key: name3,
+      setup () {
+        console.log(`render ${name3} component`)
+        return () => h('h1', name3)
+      }
+    }
+
+
+    /*
+      keep-alive有且只能有一个子节点
+      max: 最大缓存组件个数,默认Infinity
+      <keep-alive>
+        <router-view></router-view>
+      </keep-alive>
+    */
+
+    const max = 3
+
+    render(h(KeepAlive, { max }, { default: () => h(component1) }), app)
+
+    setTimeout(() => {
+      render(h(KeepAlive, { max }, { default: () => h(component2) }), app)
+    }, 1000)
+
+    setTimeout(() => {
+      render(h(KeepAlive, { max }, { default: () => h(component3) }), app)
+    }, 2000)
+
+    setTimeout(() => {
+      render(h(KeepAlive, { max }, { default: () => h(component3) }), app)
+    }, 3000)
+
+    setTimeout(() => {
+      render(h(KeepAlive, { max }, { default: () => h(component2) }), app)
+    }, 4000)
+
+    setTimeout(() => {
+      render(h(KeepAlive, { max }, { default: () => h(component1) }), app)
+    }, 5000)
+
+  </script>
+</body>
+
+</html>
