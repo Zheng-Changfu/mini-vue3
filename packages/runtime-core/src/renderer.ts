@@ -5,6 +5,7 @@ import { createComponentInstance, setupComponent } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 import { updateProps } from "./componentProps";
 import { queueJob } from "./scheduler";
+import { updateSlots } from "./componentSlots";
 
 export function createRenderer(options) {
   const {
@@ -66,6 +67,7 @@ export function createRenderer(options) {
     const prevProps = instance.props;
     const nextProps = next.props;
     updateProps(prevProps, nextProps);
+    updateSlots(instance, next);
     instance.next = null;
     instance.vnode = next;
   };

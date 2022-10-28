@@ -82,6 +82,9 @@ export function setupComponent(instance) {
   initSlots(children, instance);
   instance.proxy = new Proxy(instance, PublicComponentProxyHandlers);
 
+  // const o1 = {slots:() =>{}}
+  // const o2 = o1
+
   const { setup, render, template } = instance.type;
   if (setup) {
     const setupContext = (instance.setupContext = createSetupContext(instance));

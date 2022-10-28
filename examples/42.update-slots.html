@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="app2"></div>
+  <div id="app3"></div>
+  <!-- <script src="../node_modules/@vue/runtime-dom/dist/runtime-dom.global.js"></script> -->
+  <script src="../packages/runtime-dom/dist/runtime-dom.global.js"></script>
+  <script>
+    const { render, h, ref, Text } = VueRuntimeDOM
+
+
+    const subComponent1 = {
+      setup () {
+        return () => h('div', '123')
+      }
+    }
+
+    const subComponent2 = {
+      setup () {
+        return () => h('div', '234')
+      }
+    }
+
+    const component = {
+      setup (_, { slots }) {
+        const age = ref(18)
+        return () => {
+          const vnode = slots.default()
+          return h('div', [
+            vnode,
+          ])
+        }
+      }
+    }
+
+    render(h(component, null, { default: () => h(subComponent1) }), app)
+
+
+    setTimeout(() => {
+      render(h(component, null, { default: () => h(subComponent2) }), app)
+    }, 1000)
+  </script>
+</body>
+
+</html>

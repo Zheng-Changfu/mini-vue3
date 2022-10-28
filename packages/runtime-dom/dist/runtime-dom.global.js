@@ -507,6 +507,11 @@ var VueRuntimeDOM = (() => {
       instance.slots = slots;
     }
   }
+  function updateSlots(instance, next) {
+    if (instance.vnode.shapeFlag & 32 /* SLOTS_CHILDREN */) {
+      Object.assign(instance.slots, next.children);
+    }
+  }
 
   // packages/runtime-core/src/component.ts
   var uid = 0;
@@ -668,6 +673,7 @@ var VueRuntimeDOM = (() => {
       const prevProps = instance.props;
       const nextProps = next.props;
       updateProps(prevProps, nextProps);
+      updateSlots(instance, next);
       instance.next = null;
       instance.vnode = next;
     };
