@@ -20,6 +20,8 @@ export {
   onBeforeUpdate,
   onMounted,
   onUpdated,
+  onBeforeUnmount,
+  onUnmounted,
 } from "./apiLifecycle";
 export { provide, inject } from "./apiInject";
 export { defineAsyncComponent } from "./apiAsyncComponent";

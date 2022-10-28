@@ -391,10 +391,27 @@ export function createRenderer(options) {
     }
   };
 
+  const unmountComponent = (instance) => {
+    const { subTree, bum, um } = instance;
+    if (bum) {
+      invokerArrayFns(bum); // beforeUnmount
+    }
+
+    // 停止当前组件的依赖收集,我们没做
+
+    unmount(subTree); // 卸载这个组件对应的真实元素
+
+    if (um) {
+      invokerArrayFns(um);
+    }
+  };
+
   const unmount = (vnode) => {
-    const { el, type } = vnode;
+    const { el, type, shapeFlag } = vnode;
     if (type === Fragment) {
       unmountChildren(vnode.children);
+    } else if (shapeFlag & ShapeFlags.COMPONENT) {
+      unmountComponent(vnode.component);
     } else {
       hostRemove(el);
     }

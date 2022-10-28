@@ -12,6 +12,8 @@ export const enum LifecycleHooks {
   MOUNTED = "m", // mounted
   BEFORE_UPDATE = "bu", // beforeUpdate
   UPDATED = "u", // updated
+  BEFORE_UNMOUNT = "bum", // beforeUnmount
+  UNMOUNTED = "um", // unmounted
 }
 
 export function createComponentInstance(vnode, parent) {
