@@ -4,6 +4,7 @@ import { createComponentInstance, setupComponent } from "./component";
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from "./vnode";
 import { updateProps } from "./componentProps";
 import { queueJob } from "./scheduler";
+import { updateSlots } from "./componentSlots";
 
 export function createRenderer(options) {
   const {
@@ -127,6 +128,7 @@ export function createRenderer(options) {
     const prevProps = instance.props; // 实例上的props,具备响应式的
     const nextProps = nextVNode.props; // 组件上的props,包含了attrs的
     updateProps(prevProps, nextProps);
+    updateSlots(instance, nextVNode);
     instance.next = null;
     instance.vnode = nextVNode;
   };
