@@ -403,11 +403,30 @@ export function createRenderer(options) {
   };
 
   const unmount = (vnode) => {
-    const { el, type } = vnode;
+    const { el, type, shapeFlag } = vnode;
     if (type === Fragment) {
       unmountChildren(vnode.children);
+    } else if (shapeFlag & ShapeFlags.COMPONENT) {
+      unmountComponent(vnode);
     } else {
       hostRemove(el);
+    }
+  };
+
+  const unmountComponent = (vnode) => {
+    const {
+      component: { bum, um },
+      el,
+    } = vnode;
+
+    if (bum) {
+      invokerArrayFns(bum);
+    }
+
+    hostRemove(el);
+
+    if (um) {
+      invokerArrayFns(um);
     }
   };
 

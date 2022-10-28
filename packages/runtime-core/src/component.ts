@@ -137,4 +137,6 @@ export const enum LifecycleHooks {
   MOUNTED = "m",
   BEFORE_UPDATE = "bu",
   UPDATED = "u",
+  BEFORE_UNMOUNT = "bum",
+  UNMOUNTED = "um",
 }

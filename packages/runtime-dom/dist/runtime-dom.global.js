@@ -52,8 +52,10 @@ var VueRuntimeDOM = (() => {
     isVNode: () => isVNode,
     nextTick: () => nextTick,
     onBeforeMount: () => onBeforeMount,
+    onBeforeUnmount: () => onBeforeUnmount,
     onBeforeUpdate: () => onBeforeUpdate,
     onMounted: () => onMounted,
+    onUnmounted: () => onUnmounted,
     onUpdated: () => onUpdated,
     provide: () => provide,
     proxyRefs: () => proxyRefs,
@@ -918,11 +920,26 @@ var VueRuntimeDOM = (() => {
       }
     };
     const unmount = (vnode) => {
-      const { el, type } = vnode;
+      const { el, type, shapeFlag } = vnode;
       if (type === Fragment) {
         unmountChildren(vnode.children);
+      } else if (shapeFlag & 6 /* COMPONENT */) {
+        unmountComponent(vnode);
       } else {
         hostRemove(el);
+      }
+    };
+    const unmountComponent = (vnode) => {
+      const {
+        component: { bum, um },
+        el
+      } = vnode;
+      if (bum) {
+        invokerArrayFns(bum);
+      }
+      hostRemove(el);
+      if (um) {
+        invokerArrayFns(um);
       }
     };
     const render2 = (vnode, container) => {
@@ -1006,6 +1023,8 @@ var VueRuntimeDOM = (() => {
   var onMounted = createHook("m" /* MOUNTED */);
   var onBeforeUpdate = createHook("bu" /* BEFORE_UPDATE */);
   var onUpdated = createHook("u" /* UPDATED */);
+  var onBeforeUnmount = createHook("bum" /* BEFORE_UNMOUNT */);
+  var onUnmounted = createHook("um" /* UNMOUNTED */);
 
   // packages/runtime-core/src/apiInject.ts
   function provide(key, value) {
